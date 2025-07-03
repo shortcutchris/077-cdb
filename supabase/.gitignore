@@ -1,8 +1,9 @@
 # Supabase
 .branches
 .temp
-
-# dotenvx
-.env.keys
+.env
 .env.local
-.env.*.local
+
+# Functions
+functions/*/node_modules
+functions/*/.env

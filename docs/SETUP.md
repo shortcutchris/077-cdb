@@ -3,7 +3,7 @@
 ## Prerequisites
 
 1. **Node.js 20+** and **pnpm 8+**
-2. **Docker Desktop** - Required for Supabase local development
+2. **Supabase Project** - Already created as `cdb-077`
 3. **GitHub OAuth App** - Create at https://github.com/settings/applications/new
 4. **OpenAI API Key** - Get from https://platform.openai.com
 
@@ -27,63 +27,58 @@ Edit `.env.local` with your actual values:
 - OpenAI API key
 - SendGrid API key (optional)
 
-### 3. Start Supabase
+### 3. Configure Supabase Project
 
-```bash
-# Make sure Docker Desktop is running first!
-supabase start
-```
+The Supabase project `cdb-077` is already set up with:
 
-This will start:
+- Database schema and tables
+- Row Level Security policies
+- Storage bucket for voice recordings
 
-- Postgres database (port 54322)
-- Supabase Studio (http://localhost:54323)
-- API Gateway (http://localhost:54321)
-- Email testing (http://localhost:54324)
+Access the project at:
 
-### 4. Apply Database Migrations
+- Dashboard: https://supabase.com/dashboard/project/uecvnenvpgvytgkzfyrh
+- API URL: https://uecvnenvpgvytgkzfyrh.supabase.co
 
-```bash
-supabase db push
-```
+### 4. Configure GitHub OAuth in Supabase
 
-### 5. Verify Setup
-
-1. Open Supabase Studio: http://localhost:54323
-2. Check that all tables are created
-3. Test user should be available (test@example.com / password123)
+1. Go to Authentication → Providers in Supabase Dashboard
+2. Enable GitHub provider
+3. Add your GitHub OAuth App credentials
+4. Set redirect URL: https://uecvnenvpgvytgkzfyrh.supabase.co/auth/v1/callback
 
 ## GitHub OAuth Setup
 
 1. Go to https://github.com/settings/applications/new
-2. Set Application name: `SpecifAI Local`
+2. Set Application name: `SpecifAI`
 3. Homepage URL: `http://localhost:5173`
-4. Authorization callback URL: `http://localhost:54321/auth/v1/callback`
-5. Copy Client ID and Secret to `.env.local`
+4. Authorization callback URL: `https://uecvnenvpgvytgkzfyrh.supabase.co/auth/v1/callback`
+5. Copy Client ID and Secret to:
+   - `.env.local` file
+   - Supabase Dashboard → Authentication → Providers → GitHub
+
+## Service Role Key
+
+To get the service role key:
+
+1. Go to Supabase Dashboard → Settings → API
+2. Copy the `service_role` key (keep this secret!)
+3. Add to `.env.local`
 
 ## Troubleshooting
 
-### Docker not running
+### Check database tables
+
+Go to Supabase Dashboard → Table Editor to verify all tables are created.
+
+### Test connection
 
 ```bash
-# macOS
-open -a Docker
+# Install Supabase client globally
+npm install -g @supabase/supabase-js
 
-# Wait for Docker to start, then:
-supabase start
-```
-
-### Reset database
-
-```bash
-supabase db reset
-```
-
-### View logs
-
-```bash
-supabase status
-docker logs supabase_db_specifai
+# Test connection (replace with your keys)
+node -e "const {createClient} = require('@supabase/supabase-js'); const supabase = createClient('https://uecvnenvpgvytgkzfyrh.supabase.co', 'your-anon-key'); console.log('Connected!');"
 ```
 
 ## Next Steps
