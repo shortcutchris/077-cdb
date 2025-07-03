@@ -5,6 +5,7 @@
   "description": "Voice-to-GitHub-Issue Platform",
   "scripts": {
     "dev": "pnpm --parallel --recursive run dev",
+    "dev:web": "pnpm --filter web run dev",
     "build": "pnpm --recursive run build",
     "test": "pnpm --recursive run test",
     "lint": "pnpm --recursive run lint",
