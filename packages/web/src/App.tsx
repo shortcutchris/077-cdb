@@ -1,70 +1,72 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { UserMenu } from '@/components/UserMenu'
-import { VoiceRecorder } from '@/components/VoiceRecorder'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ProtectedAdminRoute } from '@/components/ProtectedAdminRoute'
+
+// Layouts
+import { MainLayout } from '@/layouts/MainLayout'
+import { AdminLayout } from '@/layouts/AdminLayout'
+
+// Pages
+import { HomePage } from '@/pages/HomePage'
+import { LoginPage } from '@/pages/LoginPage'
+
+// Admin Pages
+import { AdminDashboard } from '@/pages/admin/Dashboard'
+import { AdminTokens } from '@/pages/admin/Tokens'
+import { AdminRepositories } from '@/pages/admin/Repositories'
+import { AdminUsers } from '@/pages/admin/Users'
+import { AdminPermissions } from '@/pages/admin/Permissions'
+import { AdminAuditLog } from '@/pages/admin/AuditLog'
 
 function App() {
-  const { user, loading, error, signInWithGitHub } = useAuth()
+  const { loading } = useAuth()
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading...</div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <h1 className="text-2xl font-bold text-gray-900">SpecifAI</h1>
-            <div>
-              {user ? (
-                <UserMenu />
-              ) : (
-                <button
-                  onClick={signInWithGitHub}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                >
-                  Sign in with GitHub
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/login" element={<LoginPage />} />
 
-      {error && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        </div>
-      )}
+      {/* Protected routes */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<HomePage />} />
+      </Route>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {user ? (
-          <VoiceRecorder />
-        ) : (
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Welcome to SpecifAI
-            </h2>
-            <p className="text-gray-600 mb-8">
-              Please sign in with GitHub to start creating issues with your
-              voice
-            </p>
-            <button
-              onClick={signInWithGitHub}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              Sign in with GitHub
-            </button>
-          </div>
-        )}
-      </main>
-    </div>
+      {/* Admin routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedAdminRoute>
+            <AdminLayout />
+          </ProtectedAdminRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="tokens" element={<AdminTokens />} />
+        <Route path="repositories" element={<AdminRepositories />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="permissions" element={<AdminPermissions />} />
+        <Route path="audit" element={<AdminAuditLog />} />
+      </Route>
+
+      {/* Catch all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 

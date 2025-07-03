@@ -16,6 +16,7 @@ interface IssuePreviewProps {
   transcription: string
   audioUrl: string | null
   audioDuration?: number
+  repository?: string
   onEdit: (issue: IssueData) => void
   onConfirm: () => void
   onCancel: () => void
@@ -26,6 +27,7 @@ export function IssuePreview({
   transcription,
   audioUrl,
   audioDuration,
+  repository,
   onEdit,
   onConfirm,
   onCancel,
@@ -55,6 +57,11 @@ export function IssuePreview({
         <p className="text-gray-600">
           Review and edit your generated issue before creating it
         </p>
+        {repository && (
+          <p className="text-sm text-gray-500 mt-2">
+            Target repository: <span className="font-mono">{repository}</span>
+          </p>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
