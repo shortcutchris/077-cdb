@@ -62,22 +62,43 @@ When implementation begins, expect:
 
 ### GitHub Issues Integration
 
-All development tasks are tracked as GitHub Issues (#1-#17) with the following workflow:
+All development tasks are tracked as GitHub Issues (#1-#17) with the following structured workflow:
 
-1. Pick an issue from the backlog (start with high-priority phase-1 issues)
-2. Mark the corresponding todo as "in_progress"
-3. Implement the solution
-4. Test the implementation
-5. Comment on the GitHub issue with implementation details and results
-6. Close the issue on GitHub
-7. Mark the todo as "completed"
-8. Commit and push all changes to GitHub
+#### Issue Processing Workflow
 
-**Important**: Always complete these steps after successful implementation:
+1. **Issue Selection & Planning Phase**
+   - Pick an issue from the backlog
+   - Create a detailed plan in `issues/issue_X.md` (where X is the issue number)
+   - Present the plan to the user for review
+   - Iterate on the plan until user is satisfied
+   - Mark the corresponding todo as "in_progress"
 
-- Add a detailed comment to the issue explaining what was done
-- Close the issue on GitHub
-- Push all commits to the repository
+2. **Implementation Phase**
+   - Implement the solution according to the approved plan
+   - Follow the plan systematically
+   - Update the plan document if needed during implementation
+
+3. **Testing & Review Phase**
+   - Perform automated tests where possible
+   - Present the implementation to the user for testing
+   - Request user feedback and test results
+   - Iterate on implementation until all features work as expected
+
+4. **Completion Phase**
+   - Add a detailed comment to the GitHub issue explaining:
+     - What was implemented
+     - How it was tested
+     - Any important notes or decisions made
+   - Close the issue on GitHub
+   - Mark the todo as "completed"
+   - Commit and push all changes to GitHub
+
+**Important Notes**:
+
+- Always create the `issues/` directory if it doesn't exist
+- Each issue gets its own planning document (`issue_X.md`)
+- User feedback is critical - always ask for testing and confirmation
+- Document everything in the issue comments for future reference
 
 ### Task Priority Order
 
