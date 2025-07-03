@@ -28,6 +28,21 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const startTimeRef = useRef<number>(0)
 
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && recordingState !== 'idle') {
+      mediaRecorderRef.current.stop()
+      setRecordingState('stopped')
+      stopTimer()
+    }
+  }, [recordingState, stopTimer])
+
   const startTimer = useCallback(() => {
     startTimeRef.current = Date.now() - recordingTime * 1000
     timerRef.current = setInterval(() => {
@@ -40,13 +55,6 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       }
     }, 100)
   }, [recordingTime, stopRecording])
-
-  const stopTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-      timerRef.current = null
-    }
-  }, [])
 
   const startRecording = useCallback(async () => {
     try {
@@ -110,14 +118,6 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       setRecordingState('idle')
     }
   }, [startTimer])
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && recordingState !== 'idle') {
-      mediaRecorderRef.current.stop()
-      setRecordingState('stopped')
-      stopTimer()
-    }
-  }, [recordingState, stopTimer])
 
   const pauseRecording = useCallback(() => {
     if (mediaRecorderRef.current && recordingState === 'recording') {
