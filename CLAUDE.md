@@ -68,9 +68,16 @@ All development tasks are tracked as GitHub Issues (#1-#17) with the following w
 2. Mark the corresponding todo as "in_progress"
 3. Implement the solution
 4. Test the implementation
-5. Mark the todo as "completed"
-6. Comment on the GitHub issue with implementation details
-7. Close the issue when fully complete
+5. Comment on the GitHub issue with implementation details and results
+6. Close the issue on GitHub
+7. Mark the todo as "completed"
+8. Commit and push all changes to GitHub
+
+**Important**: Always complete these steps after successful implementation:
+
+- Add a detailed comment to the issue explaining what was done
+- Close the issue on GitHub
+- Push all commits to the repository
 
 ### Task Priority Order
 
