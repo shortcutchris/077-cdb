@@ -1,137 +1,154 @@
-# CLAUDE.md
+# CLAUDE.md - SpecifAI Project Context
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## 🎯 Project Overview
 
-This is the SpecifAI project repository - a voice-to-GitHub-Issue system that allows business stakeholders to speak requirements that are automatically converted into structured GitHub Issues.
+SpecifAI ist eine Voice-to-GitHub-Issue Plattform mit Admin-gesteuerten Berechtigungen. Nutzer können in unter 60 Sekunden per Spracheingabe strukturierte GitHub Issues erstellen.
 
-**Current Status**: Documentation-only repository. No code implementation exists yet.
+**Current Status**:
 
-## Architecture (From Documentation)
+- Phase 1-2 abgeschlossen (Setup, Auth, Voice Recording)
+- Phase 3 begonnen (Admin Dashboard & Berechtigungen)
+- Repository: https://github.com/shortcutchris/077-cdb
 
-The system will follow this architecture:
+## 🏗️ Architecture
 
-- **Frontend**: React 18 PWA with shadcn/ui for voice recording
-- **Backend**: Supabase Edge Functions for processing
-- **AI Pipeline**: Whisper v4 (STT) → GPT-4o (clarification loop) → GitHub Issue creation
-- **Database**: Supabase with pgvector for search, 30-day audio retention
-- **Integration**: GitHub GraphQL API via MCP server
+The system follows this architecture:
 
-## Key Components (Planned)
+- **Frontend**: React 18 PWA with shadcn/ui, Tailwind CSS v3
+- **Backend**: Supabase (Auth, DB, Storage, Edge Functions)
+- **AI Pipeline**: Whisper API → GPT-4o → GitHub Issue
+- **Database**: PostgreSQL with pgvector for search
+- **Integration**: GitHub API (REST & GraphQL)
+- **Admin System**: PAT-based repository management
 
-### Core Flow
+## 📊 Current Implementation Status
 
-1. Voice capture (≤ 2 min) → Whisper v4 transcription
-2. GPT-4o clarification loop → structured Issue draft
-3. MCP server creates GitHub Issue with real-time updates
-4. Supabase handles auth, data, and real-time channels
+### ✅ Completed
 
-### Backend Agent (Separate System)
+- Project setup with pnpm monorepo
+- Supabase project initialized
+- React PWA with Vite
+- GitHub OAuth integration
+- Voice recording component (2-min limit)
+- Whisper transcription
+- GPT-4o issue generation
+- Issue preview with editing
 
-- Autonomous coding agent that polls for `ready-for-dev` Issues
-- Generates code, opens PRs, manages CI/CD pipeline
-- State management: queued → in-progress → in-review → done
-- Supabase integration for status tracking and email notifications
+### 🚧 In Progress
 
-## Development Setup
+- Admin dashboard (Issue #6)
+- Repository permissions system
+- GitHub issue creation
 
-**Note**: No build commands exist yet as this is a documentation-only repository.
+### ⏳ Planned
 
-When implementation begins, expect:
+- Extended Whisper features
+- Clarification loop
+- Semantic search
+- Realtime updates
+- Coding agent
 
-- React 18 PWA setup with standard npm/yarn commands
-- Supabase CLI for Edge Functions development
-- GitHub GraphQL integration setup
-- Audio processing pipeline with Whisper API
+## 📝 Issue Management
 
-## Key Performance Targets
+### WICHTIG: Alle Issues werden NUR auf GitHub verwaltet
 
-- Time-to-Issue: ≤ 60 seconds
-- Agent issue detection: ≤ 60 seconds
-- PR CI pass rate: ≥ 80% first run
-- Supabase status latency: ≤ 3 seconds
+- **Single Source of Truth**: https://github.com/shortcutchris/077-cdb/issues
+- **Keine lokalen Issue-Dateien mehr**
+- **Milestones**: Organisiert in Phasen 3-6
+- **Phase Prefixes**: Klare Reihenfolge durch [P3.1], [P4.1], etc.
 
-## Documentation Structure
+### Issue Status:
 
-- `docs/SpecifAI_CodingAgent_PRD.md` - Backend coding agent requirements
-- `docs/SpecifAI_OnePager.md` - Project overview and value proposition
-- `docs/SpecifAI_PRD_v1.md` - Main product requirements document
+- ✅ Phase 1-2: Foundation & Core Features (abgeschlossen)
+- 🚧 Phase 3: Core Features (Whisper, GPT-4o, Edge Functions)
+- 🚧 Phase 4: Permission System (Admin Dashboard, GitHub API)
+- ⏳ Phase 5: Advanced Features (Search, Realtime, Storage, Agent)
+- ⏳ Phase 6: Infrastructure & Quality (CI/CD, Testing, Monitoring)
 
-## Development Workflow
+## 🔑 Key Implementation Details
 
-### GitHub Issues Integration
+### Environment
 
-All development tasks are tracked as GitHub Issues (#1-#17) with the following structured workflow:
+- **Frontend**: `/packages/web`
+- **Supabase Project**: `uecvnenvpgvytgkzfyrh`
+- **Dev Server**: http://localhost:5174
+- **Node Version**: 20+
 
-#### Issue Processing Workflow
+### Security & Permissions
 
-1. **Issue Selection & Planning Phase**
-   - Pick an issue from the backlog
-   - Create a detailed plan in `issues/issue_X.md` (where X is the issue number)
-   - Present the plan to the user for review
-   - Iterate on the plan until user is satisfied
-   - Mark the corresponding todo as "in_progress"
+- Admin lädt Repositories via Personal Access Token
+- Admin vergibt Berechtigungen an User
+- User sehen nur freigeschaltete Repositories
+- Vollständiges Audit-Logging
 
-2. **Implementation Phase**
-   - Implement the solution according to the approved plan
-   - Follow the plan systematically
-   - Update the plan document if needed during implementation
+### Known Issues & Fixes
 
-3. **Testing & Review Phase**
-   - Perform automated tests where possible
-   - Present the implementation to the user for testing
-   - Request user feedback and test results
-   - Iterate on implementation until all features work as expected
+1. **Audio Duration**: WebM streams report `Infinity`, use recording time as fallback
+2. **Tailwind**: Use v3, not v4 (PostCSS compatibility)
+3. **Repository**: Currently hardcoded in `VoiceRecorder.tsx:116`
+4. **Storage**: No automatic cleanup implemented yet
 
-4. **Completion Phase**
-   - Add a detailed comment to the GitHub issue explaining:
-     - What was implemented
-     - How it was tested
-     - Any important notes or decisions made
-   - Close the issue on GitHub
-   - Mark the todo as "completed"
-   - Commit and push all changes to GitHub
+### API Keys (in .env)
 
-**Important Notes**:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_OPENAI_API_KEY`
 
-- Always create the `issues/` directory if it doesn't exist
-- Each issue gets its own planning document (`issue_X.md`)
-- User feedback is critical - always ask for testing and confirmation
-- Document everything in the issue comments for future reference
-
-### Task Priority Order
-
-1. **Phase 1 (Foundation)**: Issues #1-3 - Project setup, Supabase, React PWA
-2. **Phase 2 (Core Features)**: Issues #4-7 - Auth, Voice Recording, AI Integration
-3. **Phase 3 (Integration)**: Issues #8-9 - GitHub API, Edge Functions
-4. **Phase 4 (Advanced)**: Issues #10-12 - Search, Realtime, Storage
-5. **Phase 5 (Agent & CI/CD)**: Issues #13-14 - Coding Agent, Pipeline
-6. **Phase 6 (Production)**: Issues #15-17 - Monitoring, Testing, Deployment
-
-### MCP Servers Available
-
-- **GitHub**: Issue creation, PR management, repository operations
-- **Supabase**: Project management, database operations, edge functions
-- **Firecrawl**: Web scraping and research capabilities
-- **Context7**: Library documentation lookup
-- **Puppeteer**: Browser automation for testing
-
-### Development Commands (To be added as project develops)
+## 🛠️ Development Commands
 
 ```bash
 # Install dependencies
 pnpm install
 
 # Run development server
-pnpm dev
-
-# Run tests
-pnpm test
+npm run dev
 
 # Build for production
-pnpm build
+npm run build
 
-# Deploy to Supabase
-pnpm deploy:functions
+# Run linter
+npm run lint
 ```
+
+## 📚 Key Dependencies
+
+- React 18, Vite, TypeScript
+- @supabase/supabase-js
+- OpenAI SDK
+- Tailwind CSS v3
+- shadcn/ui components
+- Lucide Icons
+
+## 🚀 Next Steps
+
+1. Start with [P4.1] Admin Dashboard & Berechtigungssystem (Issue #18)
+2. Create database migration for permission tables
+3. Add repository dropdown to Voice Recorder
+4. Implement GitHub issue creation with permissions
+
+## 📋 Task Management
+
+Always use TodoRead/TodoWrite tools to track progress. Document everything directly in GitHub issues.
+
+## 🔄 Development Workflow
+
+### GitHub Issues Integration
+
+1. **Planning**: Present implementation plan in chat for approval
+2. **Implementation**: Follow approved plan systematically
+3. **Testing**: Get user feedback before marking complete
+4. **Documentation**: Update GitHub issue comments with results
+
+### MCP Servers Available
+
+- **GitHub**: Issue/PR management
+- **Supabase**: Database operations
+- **Firecrawl**: Web scraping
+- **Context7**: Library docs
+- **Puppeteer**: Browser automation
+
+---
+
+Last updated: 2025-07-03

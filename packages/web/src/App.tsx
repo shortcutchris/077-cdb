@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { UserMenu } from '@/components/UserMenu'
-import { Mic } from 'lucide-react'
+import { VoiceRecorder } from '@/components/VoiceRecorder'
 
 function App() {
   const { user, loading, error, signInWithGitHub } = useAuth()
@@ -45,20 +45,7 @@ function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {user ? (
-          <div className="text-center">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Voice to GitHub Issue
-              </h2>
-              <p className="text-gray-600">
-                Record your voice to create GitHub issues automatically
-              </p>
-            </div>
-
-            <button className="mx-auto flex items-center justify-center w-32 h-32 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors">
-              <Mic className="w-12 h-12" />
-            </button>
-          </div>
+          <VoiceRecorder />
         ) : (
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">

@@ -2,14 +2,14 @@
 
 ## 🎯 Projektziel
 
-Entwicklung einer Voice-to-GitHub-Issue Plattform, die Geschäftsanforderungen in unter 60 Sekunden in strukturierte GitHub Issues verwandelt.
+Entwicklung einer Voice-to-GitHub-Issue Plattform mit Admin-gesteuerten Berechtigungen, die Geschäftsanforderungen in unter 60 Sekunden in strukturierte GitHub Issues verwandelt.
 
 ## 🏗️ Architektur-Übersicht
 
 ### Frontend (React PWA)
 
 - **Tech Stack**: React 18, Vite, TypeScript, shadcn/ui, Tailwind CSS
-- **Features**: Voice Recording, OAuth Login, Issue Preview, Realtime Updates
+- **Features**: Voice Recording, OAuth Login, Issue Preview, Realtime Updates, Admin Dashboard
 - **Deployment**: Vercel/Netlify
 
 ### Backend (Supabase)
@@ -17,6 +17,7 @@ Entwicklung einer Voice-to-GitHub-Issue Plattform, die Geschäftsanforderungen i
 - **Services**: Auth, Database, Edge Functions, Realtime, Storage
 - **AI Pipeline**: Whisper v4 → GPT-4o → GitHub API
 - **Extras**: pgvector für Semantic Search, 30-Tage Audio Retention
+- **Admin**: Berechtigungssystem, PAT-Verwaltung, Repository-Sync
 
 ### Coding Agent (Autonomous)
 
@@ -26,142 +27,164 @@ Entwicklung einer Voice-to-GitHub-Issue Plattform, die Geschäftsanforderungen i
 
 ## 📋 Implementierungs-Tasks
 
-### Phase 1: Foundation (Woche 1-2)
+### Phase 1: Foundation (Woche 1-2) ✅
 
-- [ ] **1. Projektstruktur und Basis-Setup erstellen**
+- [x] **1. Projektstruktur und Basis-Setup erstellen**
   - Monorepo mit pnpm workspaces
-  - Frontend (`/apps/web`), Backend (`/apps/functions`), Shared (`/packages`)
-  - ESLint, Prettier, Husky für Code-Qualität
+  - Frontend (`/packages/web`), Supabase config
+  - ESLint, Prettier für Code-Qualität
 
-- [ ] **2. Supabase Projekt initialisieren**
-  - Neues Projekt auf supabase.com
-  - Lokale Entwicklungsumgebung mit Supabase CLI
-  - Basis-Tabellen: users, voice_recordings, issues, agent_queue
+- [x] **2. Supabase Projekt initialisieren**
+  - Projekt auf supabase.com erstellt
+  - Basis-Tabellen: voice_recordings
+  - Storage Bucket konfiguriert
 
-- [ ] **3. React PWA Frontend aufsetzen**
+- [x] **3. React PWA Frontend aufsetzen**
   - Vite + React 18 + TypeScript
   - PWA Manifest und Service Worker
   - shadcn/ui Installation und Theme-Setup
-  - Routing mit React Router
 
-### Phase 2: Core Features (Woche 3-4)
+### Phase 2: Core Features (Woche 3-4) ✅
 
-- [ ] **4. GitHub OAuth Integration**
-  - Supabase Auth Provider konfigurieren
-  - Login/Logout Flow
-  - Protected Routes
-  - GitHub Token Management
+- [x] **4. GitHub OAuth Integration**
+  - Supabase Auth Provider konfiguriert
+  - Login/Logout Flow implementiert
+  - Protected Routes eingerichtet
+  - AuthContext für State Management
 
-- [ ] **5. Voice Recording Component**
+- [x] **5. Voice Recording Component**
   - Web Audio API Integration
-  - 2-Minuten Limit
+  - 2-Minuten Limit mit Auto-Stop
   - Audio Visualizer
   - Upload zu Supabase Storage
+  - Whisper & GPT-4o Integration
 
-- [ ] **6. Whisper v4 Integration**
-  - OpenAI API Setup
-  - Edge Function für Transcription
-  - Error Handling und Retry-Logic
-  - Progress Feedback
+### Phase 3: Admin & Permissions (Woche 5) 🚧
 
-- [ ] **7. GPT-4o Clarification Loop**
-  - Prompt Engineering für Issue-Generierung
-  - Iterative Verbesserung
-  - Structured Output (JSON)
-  - Template System
+- [ ] **6. Admin Dashboard & Berechtigungssystem** _(NEU)_
+  - Admin-UI für User-Verwaltung
+  - PAT-Integration für Repository-Sync
+  - Repository-Berechtigungen pro User
+  - Audit-Log für Admin-Aktionen
 
-### Phase 3: GitHub Integration (Woche 5-6)
+- [ ] **7. Whisper v4 Integration (Erweitert)**
+  - Chunk-basiertes Processing
+  - Multi-Language Support
+  - Retry-Logic und Caching
+  - Progress Tracking
 
-- [ ] **8. GitHub GraphQL API via MCP**
-  - MCP Server Setup
-  - Issue Creation Mutation
-  - Repository Selection
-  - Label und Assignee Management
+### Phase 4: GitHub Integration (Woche 6) 🔄
 
-- [ ] **9. Supabase Edge Functions**
+- [ ] **8. GitHub GraphQL API mit Berechtigungen**
+  - Repository-Auswahl UI
+  - Permission-basierte Filterung
+  - Issue Creation mit Validation
+  - Label und Milestone Management
+
+- [ ] **9. GPT-4o Clarification Loop**
+  - Interaktive Nachfrage-UI
+  - Context-aware Questions
+  - Iterative Issue-Verbesserung
+  - Skip-Option für Power Users
+
+### Phase 5: Backend Infrastructure (Woche 7-8)
+
+- [ ] **10. Supabase Edge Functions**
+  - Admin-Endpoints implementieren
   - Audio Processing Pipeline
-  - Issue Creation Workflow
-  - Webhook Handler
-  - Rate Limiting
+  - Permission Validation
+  - Rate Limiting & Security
 
-### Phase 4: Advanced Features (Woche 7-8)
-
-- [ ] **10. pgvector Semantic Search**
-  - Vector Embeddings für Issues
+- [ ] **11. pgvector Semantic Search**
+  - Embedding-Generation
+  - Duplikat-Erkennung
   - Ähnliche Issues finden
-  - Duplicate Detection
+  - Smart Suggestions
 
-- [ ] **11. Realtime Updates**
-  - Supabase Channels
-  - Live Issue Status
-  - Progress Notifications
+- [ ] **12. Realtime Updates**
+  - Processing Status Live
+  - Admin Activity Feed
+  - Collaborative Features
+  - System Notifications
 
-- [ ] **12. Audio Storage Management**
+### Phase 6: Advanced Features (Woche 9-10)
+
+- [ ] **13. Audio Storage Management**
   - 30-Tage Retention Policy
   - Automatische Bereinigung
-  - Storage Quotas
+  - Archive-Optionen
+  - Storage Analytics
 
-### Phase 5: Coding Agent (Woche 9-10)
+- [ ] **14. Backend Coding Agent**
+  - Issue-to-Code Pipeline
+  - GitHub PR Creation
+  - Test Generation
+  - Human Review Loop
 
-- [ ] **13. Backend Agent Implementation**
-  - Cron Job (10 min Intervall)
-  - GitHub Webhook Listener
-  - State Machine (queued → in-progress → done)
-  - Code Generation mit GPT-4
+### Phase 7: Production Ready (Woche 11-12)
 
-- [ ] **14. CI/CD Pipeline**
-  - GitHub Actions Workflows
-  - Automated Testing
+- [ ] **15. CI/CD Pipeline**
+  - GitHub Actions Setup
   - Preview Deployments
-  - Production Releases
+  - Staging & Production
+  - Infrastructure as Code
 
-### Phase 6: Production Ready (Woche 11-12)
-
-- [ ] **15. Monitoring & Observability**
+- [ ] **16. Monitoring & Observability**
   - Sentry Integration
+  - Custom Dashboards
+  - Alert Rules
   - Performance Tracking
-  - User Analytics
-  - Error Reporting
 
-- [ ] **16. Testing Suite**
-  - Unit Tests (Vitest)
+- [ ] **17. Comprehensive Testing**
+  - Unit Tests (90% Coverage)
   - Integration Tests
   - E2E Tests (Playwright)
-  - API Mocking
+  - Visual Regression Tests
 
-- [ ] **17. Deployment Setup**
-  - Frontend auf Vercel
-  - Environment Variables
-  - Domain Setup
-  - SSL/Security
+## 🔐 Sicherheits-Features
+
+### Admin-Berechtigungen
+
+- Super Admin: Vollzugriff auf alle Funktionen
+- Repo Admin: Repository-spezifische Verwaltung
+- 2FA-Pflicht für Admin-Accounts
+- IP-Whitelisting Option
+
+### User-Berechtigungen
+
+- Nur freigeschaltete Repositories
+- Request-System für neue Repos
+- Automatische Berechtigung bei Repo-Ownership
+- Zeitbasierte Berechtigungen möglich
 
 ## 🚀 Nächste Schritte
 
-1. **Entwicklungsumgebung vorbereiten**
-   - Node.js 20+, pnpm, Git
-   - Supabase CLI installieren
-   - VS Code mit empfohlenen Extensions
+1. **Admin Dashboard UI implementieren**
+   - Layout und Navigation
+   - PAT-Verwaltung
+   - User-Tabelle mit Permissions
 
-2. **Accounts einrichten**
-   - Supabase Account
-   - OpenAI API Key
-   - GitHub App registrieren
-   - Vercel/Netlify Account
+2. **Datenbank-Schema erweitern**
+   - Admin-Tabellen erstellen
+   - RLS Policies definieren
+   - Migration ausführen
 
-3. **Mit Phase 1 beginnen**
-   - Projektstruktur erstellen
-   - Basis-Dependencies installieren
-   - Erste Commits
+3. **Repository-Integration**
+   - Dropdown in Voice Recorder
+   - Permission Checks
+   - Error Handling
 
 ## 📊 KPIs & Erfolgsmetriken
 
 - Time-to-Issue: ≤ 60 Sekunden
-- Clarification Rate: -30%
-- CI Pass Rate: ≥ 80% beim ersten Versuch
-- User Retention: ≥ 40%
+- Permission Grant Time: ≤ 5 Minuten
+- Admin Response Time: ≤ 2 Stunden
+- System Uptime: 99.9%
+- User Satisfaction: ≥ 4.5/5
 
 ## ⚠️ Risiken & Mitigationen
 
-- **Whisper Kosten**: Implementiere Caching und Batch-Processing
-- **PWA Limitierungen**: Fallback für nicht-unterstützte Browser
-- **GitHub Rate Limits**: Implementiere Queue-System und Exponential Backoff
+- **PAT-Sicherheit**: Verschlüsselung mit Supabase Vault
+- **Permission Sprawl**: Regelmäßige Audits und Cleanup
+- **API Rate Limits**: Caching und Queue-System
+- **Skalierung**: Horizontal scaling für Edge Functions
