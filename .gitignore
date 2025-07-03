@@ -65,4 +65,4 @@ supabase/.temp
 
 # PWA files
 public/sw.js
-public/workbox-*.js
+public/workbox-*.jssupabase/.env.local
