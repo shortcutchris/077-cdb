@@ -1,0 +1,18 @@
+{
+  "name": "SpecifAI",
+  "short_name": "SpecifAI",
+  "description": "Voice-to-GitHub-Issue - Autonomously processed",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

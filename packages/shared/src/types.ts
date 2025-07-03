@@ -30,12 +30,14 @@ export interface Issue {
   updatedAt: Date
 }
 
-export enum IssueStatus {
-  DRAFT = 'draft',
-  PROCESSING = 'processing',
-  CREATED = 'created',
-  FAILED = 'failed',
-}
+export const IssueStatus = {
+  DRAFT: 'draft',
+  PROCESSING: 'processing',
+  CREATED: 'created',
+  FAILED: 'failed',
+} as const
+
+export type IssueStatus = (typeof IssueStatus)[keyof typeof IssueStatus]
 
 export interface AgentTask {
   id: string
@@ -47,11 +49,14 @@ export interface AgentTask {
   updatedAt: Date
 }
 
-export enum AgentTaskStatus {
-  QUEUED = 'queued',
-  IN_PROGRESS = 'in_progress',
-  IN_REVIEW = 'in_review',
-  DONE = 'done',
-  NEEDS_INFO = 'needs_info',
-  BLOCKED = 'blocked',
-}
+export const AgentTaskStatus = {
+  QUEUED: 'queued',
+  IN_PROGRESS: 'in_progress',
+  IN_REVIEW: 'in_review',
+  DONE: 'done',
+  NEEDS_INFO: 'needs_info',
+  BLOCKED: 'blocked',
+} as const
+
+export type AgentTaskStatus =
+  (typeof AgentTaskStatus)[keyof typeof AgentTaskStatus]
