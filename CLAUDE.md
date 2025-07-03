@@ -140,6 +140,11 @@ Always use TodoRead/TodoWrite tools to track progress. Document everything direc
 2. **Implementation**: Follow approved plan systematically
 3. **Testing**: Get user feedback before marking complete
 4. **Documentation**: Update GitHub issue comments with results
+5. **Closing Issues**: When closing an issue, ALWAYS perform:
+   - Add final comment documenting what was implemented
+   - Close the issue on GitHub
+   - Create a comprehensive git commit message
+   - Push changes to GitHub
 
 ### MCP Servers Available
 
