@@ -16,6 +16,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce', // More secure for public clients
+    // Don't set redirectTo here - it should be set per auth call
   },
   global: {
     headers: {
