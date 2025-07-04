@@ -13,6 +13,7 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface GitHubIssue {
   id: number
@@ -42,6 +43,7 @@ interface IssuesListProps {
 }
 
 export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
+  const { user } = useAuth()
   const [issues, setIssues] = useState<GitHubIssue[]>([])
   const [filteredIssues, setFilteredIssues] = useState<GitHubIssue[]>([])
   const [loading, setLoading] = useState(false)
@@ -181,8 +183,21 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
   const filterIssues = () => {
     let filtered = [...issues]
 
-    if (filter !== 'all') {
+    if (filter === 'open' || filter === 'closed') {
       filtered = filtered.filter((issue) => issue.state === filter)
+    } else if (filter === 'mine') {
+      // Filter by issues created by the current user
+      const githubUsername =
+        user?.user_metadata?.user_name ||
+        user?.user_metadata?.preferred_username
+      if (githubUsername) {
+        filtered = filtered.filter(
+          (issue) => issue.user.login === githubUsername
+        )
+      } else {
+        // If we can't get the GitHub username, show no issues
+        filtered = []
+      }
     }
 
     // Sort by created date (newest first)
@@ -250,43 +265,82 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center space-x-2 mb-4 overflow-x-auto">
-        <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-        <div className="flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1">
-          <button
-            onClick={() => setFilter('all')}
-            className={cn(
-              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
-              filter === 'all'
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            )}
-          >
-            All ({issues.length})
-          </button>
-          <button
-            onClick={() => setFilter('open')}
-            className={cn(
-              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
-              filter === 'open'
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            )}
-          >
-            Open ({issues.filter((i) => i.state === 'open').length})
-          </button>
-          <button
-            onClick={() => setFilter('closed')}
-            className={cn(
-              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
-              filter === 'closed'
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            )}
-          >
-            Closed ({issues.filter((i) => i.state === 'closed').length})
-          </button>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2 overflow-x-auto">
+          <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+          <div className="flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1">
+            <button
+              onClick={() => setFilter('all')}
+              className={cn(
+                'px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
+                filter === 'all'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              <span className="sm:hidden">All</span>
+              <span className="hidden sm:inline">All ({issues.length})</span>
+            </button>
+            <button
+              onClick={() => setFilter('open')}
+              className={cn(
+                'px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
+                filter === 'open'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              <span className="sm:hidden">Open</span>
+              <span className="hidden sm:inline">
+                Open ({issues.filter((i) => i.state === 'open').length})
+              </span>
+            </button>
+            <button
+              onClick={() => setFilter('closed')}
+              className={cn(
+                'px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
+                filter === 'closed'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              <span className="sm:hidden">Closed</span>
+              <span className="hidden sm:inline">
+                Closed ({issues.filter((i) => i.state === 'closed').length})
+              </span>
+            </button>
+            <button
+              onClick={() => setFilter('mine')}
+              className={cn(
+                'px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
+                filter === 'mine'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              <span className="sm:hidden">Mine</span>
+              <span className="hidden sm:inline">
+                My Issues (
+                {(() => {
+                  const githubUsername =
+                    user?.user_metadata?.user_name ||
+                    user?.user_metadata?.preferred_username
+                  return githubUsername
+                    ? issues.filter((i) => i.user.login === githubUsername)
+                        .length
+                    : 0
+                })()}
+                )
+              </span>
+            </button>
+          </div>
         </div>
+        {/* Count Display - Mobile only */}
+        {!loading && !error && (
+          <div className="sm:hidden text-sm font-medium text-gray-600 dark:text-gray-400 flex-shrink-0 ml-2">
+            {filteredIssues.length}/{issues.length}
+          </div>
+        )}
       </div>
 
       {/* Issues List - Scrollable Container */}
@@ -317,7 +371,9 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {filter === 'all'
                 ? 'This repository has no issues yet'
-                : `No ${filter} issues in this repository`}
+                : filter === 'mine'
+                  ? 'You have not created any issues in this repository'
+                  : `No ${filter} issues in this repository`}
             </p>
           </div>
         ) : (
