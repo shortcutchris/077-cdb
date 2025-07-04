@@ -236,38 +236,29 @@ export function VoiceRecorder({
               throw new Error('No active session. Please sign in again.')
             }
 
-            console.log('Creating issue with session token...')
+            console.log('Creating issue with Supabase SDK...')
 
-            const response = await fetch(
-              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-create-issue`,
+            // Use Supabase SDK to invoke the function
+            const { data, error } = await supabase.functions.invoke(
+              'github-create-issue',
               {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${session.access_token}`,
-                },
-                body: JSON.stringify({
+                body: {
                   repository: selectedRepository,
                   title: generatedIssue.title,
                   body: generatedIssue.body,
                   labels: generatedIssue.labels,
-                }),
+                },
               }
             )
 
-            const responseText = await response.text()
-            let responseData
+            if (error) throw error
 
-            // Check if response is HTML (Supabase returns HTML on success sometimes)
-            if (response.ok && responseText.includes('<!DOCTYPE html>')) {
-              // Since the issue was created successfully, show success
+            // Show success and redirect to issue
+            if (data?.success && data?.data?.html_url) {
               alert(
-                `Issue created successfully! Check your GitHub repository: https://github.com/${selectedRepository}/issues`
+                `Issue created successfully! View it at: ${data.data.html_url}`
               )
-              window.open(
-                `https://github.com/${selectedRepository}/issues`,
-                '_blank'
-              )
+              window.open(data.data.html_url, '_blank')
 
               // Notify parent component that an issue was created
               onIssueCreated?.()
@@ -279,54 +270,9 @@ export function VoiceRecorder({
               setHasProcessedCurrentRecording(false)
               // Clear the audio to prevent re-processing
               resetRecording()
-              return
+            } else {
+              throw new Error('Failed to create issue - no URL returned')
             }
-
-            try {
-              responseData = JSON.parse(responseText)
-            } catch (e) {
-              console.error('Failed to parse response:', responseText)
-              console.error('Response status:', response.status)
-              console.error(
-                'Response headers:',
-                Object.fromEntries(response.headers.entries())
-              )
-
-              // Spezielle Nachricht für bekanntes Problem
-              if (
-                responseText.includes('<!DOCTYPE html>') ||
-                responseText.length < 2
-              ) {
-                throw new Error(
-                  'Die Issue-Erstellung funktioniert momentan nicht. ' +
-                    'Bitte versuche es später erneut.'
-                )
-              }
-
-              throw new Error('Invalid response from server')
-            }
-
-            if (!response.ok) {
-              console.error('Edge function error:', responseData)
-              throw new Error(responseData.error || 'Failed to create issue')
-            }
-
-            // Show success and redirect to issue
-            alert(
-              `Issue created successfully! View it at: ${responseData.data.html_url}`
-            )
-            window.open(responseData.data.html_url, '_blank')
-
-            // Notify parent component that an issue was created
-            onIssueCreated?.()
-
-            // Reset state
-            setGeneratedIssue(null)
-            setProcessingState('idle')
-            setStorageUrl(null)
-            setHasProcessedCurrentRecording(false)
-            // Clear the audio to prevent re-processing
-            resetRecording()
           } catch (err) {
             alert(
               `Error creating issue: ${err instanceof Error ? err.message : 'Unknown error'}`
