@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & {
-    variant?: 'default' | 'destructive'
+    variant?: 'default' | 'destructive' | 'success'
   }
 >(({ className, variant = 'default', ...props }, ref) => (
   <div
@@ -14,8 +14,10 @@ const Alert = React.forwardRef<
       'relative w-full rounded-lg border p-4',
       {
         'bg-background text-foreground': variant === 'default',
-        'border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20':
+        'border-destructive/50 text-destructive dark:border-destructive dark:text-destructive-foreground bg-destructive/10 dark:bg-destructive/20':
           variant === 'destructive',
+        'border-success/50 text-success dark:border-success dark:text-success-foreground bg-success/10 dark:bg-success/20':
+          variant === 'success',
       },
       className
     )}
