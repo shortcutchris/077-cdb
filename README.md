@@ -86,29 +86,63 @@ pnpm test:e2e
 1. Fork this repository to your GitHub account
 2. Import the repository on [Replit](https://replit.com)
 3. Set up environment variables in Replit Secrets:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_OPENAI_API_KEY`
-4. Click "Run" - Replit will automatically install dependencies and start the app
+   - `VITE_SUPABASE_URL`: Your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+   - `VITE_OPENAI_API_KEY`: Your OpenAI API key (not `OPENAI_API_KEY`!)
+   - `VITE_APP_URL`: Your Replit deployment URL (e.g., `https://your-app.replit.app`)
+
+### OAuth Configuration
+
+For GitHub OAuth to work properly, you need to configure URLs in multiple places:
+
+#### 1. Supabase Dashboard
+
+- Go to [Authentication > URL Configuration](https://supabase.com/dashboard/project/_/auth/url-configuration)
+- Add your Replit URLs to **Redirect URLs**:
+  - Development: `https://your-dev-subdomain.riker.replit.dev/login`
+  - Production: `https://your-app.replit.app/login`
+  - Wildcards: `https://*.replit.dev/**`, `https://*.replit.app/**`, `https://*.repl.co/**`
+
+#### 2. GitHub OAuth App
+
+- Go to GitHub Settings > Developer settings > OAuth Apps
+- **Homepage URL**: Your Replit URL (e.g., `https://your-app.replit.app`)
+- **Authorization callback URL**: Keep as `https://your-project.supabase.co/auth/v1/callback`
+  - ⚠️ This must point to Supabase, NOT your app!
+
+#### 3. Environment Variables
+
+- Set `VITE_APP_URL` in Replit Secrets to match your deployment URL
+- This ensures OAuth redirects work correctly
+
+### Deployment Steps
+
+1. **Development Deploy**:
+
+   ```bash
+   # Replit will auto-run: npm install && npm run build && npm run preview
+   ```
+
+2. **Production Deploy**:
+   - Use Replit's deployment feature
+   - Update `VITE_APP_URL` to production URL
+   - Add production URL to Supabase redirect URLs
 
 ### Configuration
 
 The `.replit` file is pre-configured with:
 
 - Node.js 20 environment
-- pnpm package manager
 - Automatic build process
 - Port 3000 exposed for web access
-- Audio capabilities enabled for voice recording
 - CORS headers configured for cross-origin requests
+- Proper host bindings for Replit domains
 
-### Important: CORS Setup
+### Troubleshooting
 
-Before deploying on Replit, configure CORS in your Supabase project:
-
-1. Go to Supabase Dashboard > Authentication > URL Configuration
-2. Add your Replit domain to allowed URLs (see [CORS_SETUP.md](docs/CORS_SETUP.md))
-3. Update GitHub OAuth callback URL with your Replit domain
+- **OAuth Redirect Error**: Check `/debug` page for actual redirect URLs being sent
+- **CORS Issues**: Ensure all Replit domains are in allowed hosts in `vite.config.ts`
+- **Environment Variables**: All client-side vars must start with `VITE_`
 
 ### Resource Requirements
 
