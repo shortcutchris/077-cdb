@@ -255,18 +255,18 @@ export function VoiceRecorder({
               }
             )
 
-            let responseData
             const responseText = await response.text()
+            let responseData
 
             try {
               responseData = JSON.parse(responseText)
             } catch (e) {
               console.error('Failed to parse response:', responseText)
-              throw new Error('Invalid response from server')
-            }
 
-            if (!response.ok) {
-              console.error('Edge function error:', responseData)
+              // Wenn die Response erfolgreich war aber kein JSON ist, ist das ein Server-Fehler
+              if (response.ok) {
+                throw new Error('Server returned invalid response format')
+              }
 
               // Spezielle Nachricht für bekanntes Problem
               if (
@@ -274,11 +274,16 @@ export function VoiceRecorder({
                 responseText.length < 2
               ) {
                 throw new Error(
-                  'Die Issue-Erstellung funktioniert momentan nicht, da die Edge Function noch nicht deployed ist. ' +
-                    'Bitte wende dich an einen Administrator. (Issue #46)'
+                  'Die Issue-Erstellung funktioniert momentan nicht. ' +
+                    'Bitte versuche es später erneut.'
                 )
               }
 
+              throw new Error('Invalid response from server')
+            }
+
+            if (!response.ok) {
+              console.error('Edge function error:', responseData)
               throw new Error(responseData.error || 'Failed to create issue')
             }
 
