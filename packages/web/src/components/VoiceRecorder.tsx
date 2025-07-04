@@ -267,6 +267,18 @@ export function VoiceRecorder({
 
             if (!response.ok) {
               console.error('Edge function error:', responseData)
+
+              // Spezielle Nachricht für bekanntes Problem
+              if (
+                responseText.includes('<!DOCTYPE html>') ||
+                responseText.length < 2
+              ) {
+                throw new Error(
+                  'Die Issue-Erstellung funktioniert momentan nicht, da die Edge Function noch nicht deployed ist. ' +
+                    'Bitte wende dich an einen Administrator. (Issue #46)'
+                )
+              }
+
               throw new Error(responseData.error || 'Failed to create issue')
             }
 
