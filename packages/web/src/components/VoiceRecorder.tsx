@@ -262,6 +262,11 @@ export function VoiceRecorder({
               responseData = JSON.parse(responseText)
             } catch (e) {
               console.error('Failed to parse response:', responseText)
+              console.error('Response status:', response.status)
+              console.error(
+                'Response headers:',
+                Object.fromEntries(response.headers.entries())
+              )
 
               // Wenn die Response erfolgreich war aber kein JSON ist, ist das ein Server-Fehler
               if (response.ok) {
