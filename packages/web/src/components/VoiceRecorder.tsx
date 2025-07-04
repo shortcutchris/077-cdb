@@ -258,6 +258,30 @@ export function VoiceRecorder({
             const responseText = await response.text()
             let responseData
 
+            // Check if response is HTML (Supabase returns HTML on success sometimes)
+            if (response.ok && responseText.includes('<!DOCTYPE html>')) {
+              // Since the issue was created successfully, show success
+              alert(
+                `Issue created successfully! Check your GitHub repository: https://github.com/${selectedRepository}/issues`
+              )
+              window.open(
+                `https://github.com/${selectedRepository}/issues`,
+                '_blank'
+              )
+
+              // Notify parent component that an issue was created
+              onIssueCreated?.()
+
+              // Reset state
+              setGeneratedIssue(null)
+              setProcessingState('idle')
+              setStorageUrl(null)
+              setHasProcessedCurrentRecording(false)
+              // Clear the audio to prevent re-processing
+              resetRecording()
+              return
+            }
+
             try {
               responseData = JSON.parse(responseText)
             } catch (e) {
@@ -267,11 +291,6 @@ export function VoiceRecorder({
                 'Response headers:',
                 Object.fromEntries(response.headers.entries())
               )
-
-              // Wenn die Response erfolgreich war aber kein JSON ist, ist das ein Server-Fehler
-              if (response.ok) {
-                throw new Error('Server returned invalid response format')
-              }
 
               // Spezielle Nachricht für bekanntes Problem
               if (
