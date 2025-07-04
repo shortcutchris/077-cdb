@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { getRedirectUrl } from '@/config/cors'
+import { debugOAuthRedirect, getOAuthRedirectUrl } from '@/utils/debug-auth'
 
 interface AuthContextType {
   user: User | null
@@ -70,14 +70,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGitHub = async () => {
     try {
       setError(null)
-      const { error } = await supabase.auth.signInWithOAuth({
+
+      // Debug info
+      const debug = debugOAuthRedirect()
+      console.log('OAuth Debug:', debug)
+
+      // Get the exact redirect URL
+      const redirectUrl = getOAuthRedirectUrl()
+      console.log('Using redirect URL:', redirectUrl)
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: getRedirectUrl(),
+          redirectTo: redirectUrl,
           scopes: 'read:user user:email repo',
         },
       })
+
       if (error) throw error
+
+      // Log the actual OAuth URL that will be used
+      if (data?.url) {
+        console.log('OAuth URL:', data.url)
+        // Extract the redirect_uri parameter
+        const url = new URL(data.url)
+        const redirectUri = url.searchParams.get('redirect_uri')
+        console.log('Actual redirect_uri sent to GitHub:', redirectUri)
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'An error occurred during sign in'
