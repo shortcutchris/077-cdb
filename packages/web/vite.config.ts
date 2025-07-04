@@ -10,6 +10,28 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    // Allow Replit to access the dev server
+    host: '0.0.0.0',
+    port: 5174,
+    hmr: {
+      // Use websocket for HMR in Replit
+      port: 5174,
+    },
+    cors: {
+      origin: true, // Allow all origins in development
+      credentials: true,
+    },
+  },
+  preview: {
+    // Production preview server settings for Replit
+    host: '0.0.0.0',
+    port: 3000,
+    cors: {
+      origin: true, // Allow all origins for preview
+      credentials: true,
+    },
+  },
   plugins: [
     react(),
     VitePWA({

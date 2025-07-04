@@ -1,0 +1,58 @@
+# Replit Configuration for SpecifAI
+
+# Hidden files that should be ignored
+hidden = [".git", "node_modules", ".env", ".env.local"]
+
+# Main entry point
+entrypoint = "packages/web/index.html"
+
+# Configure the run command
+[nix]
+channel = "stable-24_11"
+
+# Install dependencies and run the development server
+run = "pnpm install && cd packages/web && pnpm run build && pnpm run preview"
+
+# Build command for production
+onBoot = "pnpm install"
+
+# Language configuration
+[languages.javascript]
+pattern = "**/*.{js,jsx,ts,tsx}"
+
+[languages.html]
+pattern = "**/*.html"
+
+[languages.css]
+pattern = "**/*.css"
+
+# Deployment configuration
+[deployment]
+build = ["sh", "-c", "pnpm install && pnpm run build"]
+run = ["sh", "-c", "cd packages/web && pnpm run preview --host 0.0.0.0 --port 3000"]
+
+# Environment variables (these need to be set in Replit secrets)
+[env]
+NODE_ENV = "production"
+
+# Port configuration
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+# Configure Vite preview server to work with Replit
+[packager]
+language = "nodejs-npm"
+
+[packager.features]
+packageSearch = true
+guessImports = true
+enabledForHosting = false
+
+# Audio capabilities for voice recording
+[audio]
+mic = true
+
+# Configure CPU cores (Replit free tier typically has 0.5-1 vCPU)
+[compute]
+cpus = 1
