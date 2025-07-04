@@ -96,6 +96,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const url = new URL(data.url)
         const redirectUri = url.searchParams.get('redirect_uri')
         console.log('Actual redirect_uri sent to GitHub:', redirectUri)
+
+        // Store debug info in localStorage so we can check it later
+        const debugInfo = {
+          timestamp: new Date().toISOString(),
+          oauthUrl: data.url,
+          redirectUri: redirectUri,
+          expectedRedirect: redirectUrl,
+          viteAppUrl: import.meta.env.VITE_APP_URL,
+          windowOrigin: window.location.origin,
+        }
+
+        localStorage.setItem('oauth_debug', JSON.stringify(debugInfo))
+        console.log(
+          'Debug info saved to localStorage. Check with: JSON.parse(localStorage.getItem("oauth_debug"))'
+        )
       }
     } catch (err) {
       setError(
