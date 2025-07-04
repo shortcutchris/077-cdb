@@ -2,18 +2,26 @@
 
 hidden = [".git", "node_modules", ".env", ".env.local", ".cache", "dist", ".vite", "pnpm-lock.yaml"]
 
-# Direkt in packages/web arbeiten
+# Development run command
 run = """
   cd packages/web
   npm install
-  npm run dev -- --host 0.0.0.0 --port 3000
+  npm run build
+  npm run preview -- --host 0.0.0.0 --port 3000
 """
+
+# Production deployment configuration
+[deployment]
+build = ["sh", "-c", "cd packages/web && npm install && npm run build"]
+run = ["sh", "-c", "cd packages/web && npm run preview -- --host 0.0.0.0 --port 3000"]
+deploymentTarget = "static"
+publicDir = "packages/web/dist"
 
 [nix]
 channel = "stable-24_11"
 
 [env]
-NODE_ENV = "development"
+NODE_ENV = "production"
 SKIP_HUSKY = "true"
 
 [[ports]]

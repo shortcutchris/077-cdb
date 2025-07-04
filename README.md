@@ -89,7 +89,7 @@ pnpm test:e2e
    - `VITE_SUPABASE_URL`: Your Supabase project URL
    - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
    - `VITE_OPENAI_API_KEY`: Your OpenAI API key (not `OPENAI_API_KEY`!)
-   - `VITE_APP_URL`: Your Replit deployment URL (e.g., `https://your-app.replit.app`)
+   - `VITE_APP_URL`: Your Replit deployment URL (e.g., `https://077-cdb.replit.app`)
 
 ### OAuth Configuration
 
