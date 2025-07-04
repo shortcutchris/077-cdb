@@ -22,6 +22,8 @@ export default defineConfig({
       origin: true, // Allow all origins in development
       credentials: true,
     },
+    // Allow all Replit hosts
+    allowedHosts: ['.replit.dev', '.replit.app', '.repl.co', 'localhost'],
   },
   preview: {
     // Production preview server settings for Replit
@@ -31,6 +33,8 @@ export default defineConfig({
       origin: true, // Allow all origins for preview
       credentials: true,
     },
+    // Allow all Replit hosts
+    allowedHosts: ['.replit.dev', '.replit.app', '.repl.co', 'localhost'],
   },
   plugins: [
     react(),
