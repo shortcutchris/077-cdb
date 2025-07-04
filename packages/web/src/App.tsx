@@ -13,7 +13,6 @@ import { LoginPage } from '@/pages/LoginPage'
 import { SignupPage } from '@/pages/SignupPage'
 import { DebugPage } from '@/pages/DebugPage'
 import { SetupGuidePage } from '@/pages/SetupGuidePage'
-import { TestPage } from '@/pages/TestPage'
 
 // Admin Pages
 import { AdminDashboard } from '@/pages/admin/Dashboard'
@@ -41,7 +40,6 @@ function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/debug" element={<DebugPage />} />
       <Route path="/setup" element={<SetupGuidePage />} />
-      <Route path="/test" element={<TestPage />} />
 
       {/* Protected routes */}
       <Route
