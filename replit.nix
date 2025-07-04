@@ -3,9 +3,6 @@
     # Node.js 20 LTS
     pkgs.nodejs_20
     
-    # pnpm package manager
-    pkgs.nodePackages.pnpm
-    
     # Git for version control
     pkgs.git
     
@@ -27,9 +24,5 @@
   env = {
     # Set Node options for better performance
     NODE_OPTIONS = "--max-old-space-size=512";
-    
-    # Ensure pnpm uses the correct store
-    PNPM_HOME = "/home/runner/.local/share/pnpm";
-    PATH = "$PNPM_HOME:$PATH";
   };
 }

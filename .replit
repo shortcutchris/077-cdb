@@ -11,10 +11,10 @@ entrypoint = "packages/web/index.html"
 channel = "stable-24_11"
 
 # Install dependencies and run the development server
-run = "pnpm install && cd packages/web && pnpm run build && pnpm run preview"
+run = "npm install && npm run build && npm run preview"
 
 # Build command for production
-onBoot = "pnpm install"
+onBoot = "npm install"
 
 # Language configuration
 [languages.javascript]
@@ -28,8 +28,8 @@ pattern = "**/*.css"
 
 # Deployment configuration
 [deployment]
-build = ["sh", "-c", "pnpm install && pnpm run build"]
-run = ["sh", "-c", "cd packages/web && pnpm run preview --host 0.0.0.0 --port 3000"]
+build = ["sh", "-c", "npm install && npm run build"]
+run = ["sh", "-c", "cd packages/web && npm run preview --host 0.0.0.0 --port 3000"]
 
 # Environment variables (these need to be set in Replit secrets)
 [env]
@@ -49,10 +49,5 @@ packageSearch = true
 guessImports = true
 enabledForHosting = false
 
-# Audio capabilities for voice recording
-[audio]
-mic = true
-
-# Configure CPU cores (Replit free tier typically has 0.5-1 vCPU)
-[compute]
-cpus = 1
+# Audio is enabled by default in Replit, no configuration needed
+# The browser will ask for microphone permissions when needed
