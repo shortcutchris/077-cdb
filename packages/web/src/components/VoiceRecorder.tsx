@@ -226,7 +226,17 @@ export function VoiceRecorder({
         onEdit={(editedIssue) => setGeneratedIssue(editedIssue)}
         onConfirm={async () => {
           try {
-            // Debug: Creating issue
+            // Get session
+            const {
+              data: { session },
+              error: sessionError,
+            } = await supabase.auth.getSession()
+
+            if (sessionError || !session) {
+              throw new Error('No active session. Please sign in again.')
+            }
+
+            console.log('Creating issue with session token...')
 
             const response = await fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-create-issue`,
@@ -234,7 +244,7 @@ export function VoiceRecorder({
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+                  Authorization: `Bearer ${session.access_token}`,
                 },
                 body: JSON.stringify({
                   repository: selectedRepository,
@@ -245,10 +255,18 @@ export function VoiceRecorder({
               }
             )
 
-            const responseData = await response.json()
-            // Debug: Edge function response
+            let responseData
+            const responseText = await response.text()
+
+            try {
+              responseData = JSON.parse(responseText)
+            } catch (e) {
+              console.error('Failed to parse response:', responseText)
+              throw new Error('Invalid response from server')
+            }
 
             if (!response.ok) {
+              console.error('Edge function error:', responseData)
               throw new Error(responseData.error || 'Failed to create issue')
             }
 

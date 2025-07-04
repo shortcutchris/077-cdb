@@ -1,11 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from '../_shared/cors.ts'
 
 interface CreateIssueRequest {
   repository: string // owner/name format
@@ -23,6 +18,15 @@ serve(async (req) => {
   }
 
   try {
+    // Validate request body
+    let request: CreateIssueRequest
+    try {
+      request = await req.json()
+    } catch (e) {
+      console.error('Failed to parse request body:', e)
+      throw new Error('Invalid request body - must be valid JSON')
+    }
+
     // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -44,8 +48,7 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    // Parse request
-    const request: CreateIssueRequest = await req.json()
+    // Extract fields from request
     const { repository, title, body, labels, assignees, milestone } = request
 
     if (!repository || !title || !body) {
@@ -189,13 +192,24 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Create issue error:', error)
+    const errorMessage =
+      error instanceof Error ? error.message : 'Internal server error'
+    const statusCode =
+      errorMessage === 'Unauthorized'
+        ? 401
+        : errorMessage.includes('Invalid request body')
+          ? 400
+          : errorMessage.includes('permission')
+            ? 403
+            : 400
+
     return new Response(
       JSON.stringify({
-        error: error.message || 'Internal server error',
+        error: errorMessage,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: error.message === 'Unauthorized' ? 401 : 400,
+        status: statusCode,
       }
     )
   }
