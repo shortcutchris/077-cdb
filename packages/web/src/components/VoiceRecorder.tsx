@@ -337,50 +337,51 @@ export function VoiceRecorder({
                 <Mic className="w-12 h-12" />
               </button>
             ) : recordingState === 'recording' ? (
-              <div className="space-y-4">
+              <div className="flex items-center justify-center space-x-6">
+                <button
+                  onClick={pauseRecording}
+                  className="relative flex items-center justify-center w-20 h-20 bg-gray-900 dark:bg-gray-700 text-white rounded-full shadow-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Pause className="w-8 h-8" />
+                </button>
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-40 h-40 bg-red-500 rounded-full animate-pulse opacity-20" />
+                    <div className="w-32 h-32 bg-red-500 rounded-full animate-pulse opacity-20" />
                   </div>
-                  <button
-                    onClick={pauseRecording}
-                    className="relative flex items-center justify-center w-32 h-32 bg-red-500 text-white rounded-full shadow-lg z-10"
-                  >
-                    <Pause className="w-12 h-12" />
-                  </button>
+                  <div className="relative flex items-center justify-center w-24 h-24 bg-red-500 rounded-full shadow-lg">
+                    <div className="w-4 h-4 bg-white rounded-full animate-pulse" />
+                  </div>
                 </div>
-                <div className="flex justify-center space-x-4">
-                  <button
-                    onClick={handleStopRecording}
-                    className="flex items-center justify-center w-16 h-16 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-700"
-                  >
-                    <Square className="w-6 h-6" />
-                  </button>
-                </div>
+                <button
+                  onClick={handleStopRecording}
+                  className="flex items-center justify-center w-20 h-20 bg-gray-900 dark:bg-gray-700 text-white rounded-full shadow-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Square className="w-8 h-8" />
+                </button>
               </div>
             ) : recordingState === 'paused' ? (
-              <div className="space-y-4">
+              <div className="flex items-center justify-center space-x-6">
                 <button
                   onClick={resumeRecording}
-                  className="relative flex items-center justify-center w-32 h-32 bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600"
+                  className="relative flex items-center justify-center w-24 h-24 bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600 transition-colors"
                 >
-                  <Play className="w-12 h-12" />
+                  <Play className="w-10 h-10" />
                 </button>
-                <div className="flex justify-center space-x-4">
-                  <button
-                    onClick={handleStopRecording}
-                    className="flex items-center justify-center w-16 h-16 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-700"
-                  >
-                    <Square className="w-6 h-6" />
-                  </button>
-                </div>
+                <button
+                  onClick={handleStopRecording}
+                  className="flex items-center justify-center w-20 h-20 bg-gray-900 dark:bg-gray-700 text-white rounded-full shadow-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Square className="w-8 h-8" />
+                </button>
               </div>
             ) : null}
           </div>
 
           {/* Audio Visualizer */}
           {recordingState === 'recording' && (
-            <AudioVisualizer isRecording={true} />
+            <div className="mt-8">
+              <AudioVisualizer isRecording={true} />
+            </div>
           )}
 
           {/* Error Display */}
@@ -416,16 +417,16 @@ export function VoiceRecorder({
             processingState === 'idle' && (
               <div className="space-y-4">
                 <AudioPlayer audioUrl={audioUrl} />
-                <div className="flex justify-center space-x-4">
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
                   <button
                     onClick={handleStartRecording}
-                    className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="py-3 px-6 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
                   >
                     New Recording
                   </button>
                   <button
                     onClick={processRecording}
-                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    className="py-3 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
                   >
                     Process Recording
                   </button>

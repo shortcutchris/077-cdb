@@ -33,7 +33,7 @@ export function HomePage() {
         </div>
 
         {/* Right Column - Issues List */}
-        <div className="lg:sticky lg:top-8 lg:h-[calc(100vh-8rem)]">
+        <div className="lg:sticky lg:top-8 lg:h-[calc(100vh-8rem)] lg:self-start">
           <IssuesList
             repository={selectedRepository}
             onIssueCreated={handleIssueCreated}

@@ -47,8 +47,8 @@ export function AudioVisualizer({ isRecording }: AudioVisualizerProps) {
 
       analyser.getByteFrequencyData(dataArray)
 
-      // Clear canvas
-      ctx.fillStyle = 'rgb(249, 250, 251)'
+      // Clear canvas with dark background
+      ctx.fillStyle = 'rgb(17, 24, 39)' // gray-900
       ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight)
 
       // Draw bars
@@ -59,10 +59,12 @@ export function AudioVisualizer({ isRecording }: AudioVisualizerProps) {
       for (let i = 0; i < bufferLength; i++) {
         barHeight = (dataArray[i] / 255) * canvas.offsetHeight * 0.8
 
-        // Gradient color based on height
-        const hue = (i / bufferLength) * 60 // Red to yellow
-        const lightness = 50 + (dataArray[i] / 255) * 20
-        ctx.fillStyle = `hsl(${hue}, 70%, ${lightness}%)`
+        // Gradient color based on height - red theme
+        const intensity = dataArray[i] / 255
+        const red = 220 + intensity * 35
+        const green = 38 + intensity * 20
+        const blue = 38
+        ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`
 
         ctx.fillRect(x, canvas.offsetHeight - barHeight, barWidth, barHeight)
 
@@ -88,7 +90,7 @@ export function AudioVisualizer({ isRecording }: AudioVisualizerProps) {
     <div className="w-full max-w-xl mx-auto">
       <canvas
         ref={canvasRef}
-        className="w-full h-24 rounded-lg bg-gray-100"
+        className="w-full h-24 rounded-lg bg-gray-900 shadow-inner"
         style={{ imageRendering: 'crisp-edges' }}
       />
     </div>
