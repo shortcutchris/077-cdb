@@ -75,7 +75,7 @@ export function AdminUsers() {
 
       // Combine user data with permissions
       const usersWithPermissions: UserWithPermissions[] = allUsers.map(
-        (user) => ({
+        (user: any) => ({
           id: user.id,
           email: user.email,
           created_at: user.created_at,

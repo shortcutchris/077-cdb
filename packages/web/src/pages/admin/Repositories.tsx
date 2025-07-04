@@ -89,7 +89,7 @@ export function AdminRepositories() {
       await loadRepositories()
     } catch (error) {
       console.error('Error syncing repositories:', error)
-      alert(`Error syncing repositories: ${error.message}`)
+      alert(`Error syncing repositories: ${error instanceof Error ? error.message : String(error)}`)
     } finally {
       setSyncing(false)
     }

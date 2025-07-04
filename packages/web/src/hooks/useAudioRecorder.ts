@@ -13,6 +13,7 @@ interface UseAudioRecorderReturn {
   audioUrl: string | null
   recordingTime: number
   error: string | null
+  isRecording: boolean
 }
 
 const MAX_RECORDING_TIME = 120 // 2 minutes in seconds
@@ -170,5 +171,6 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     audioUrl,
     recordingTime,
     error,
+    isRecording: recordingState === 'recording',
   }
 }

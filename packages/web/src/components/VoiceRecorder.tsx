@@ -58,7 +58,10 @@ export function VoiceRecorder({
   const [generatedIssue, setGeneratedIssue] = useState<{
     title: string
     body: string
-    labels?: string[]
+    labels: string[]
+    type: string
+    priority: string
+    needs_clarification?: string[]
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [uploadProgress] = useState(0)
