@@ -1,6 +1,14 @@
 import { useState } from 'react'
-import { Check, X, Edit2, AlertCircle } from 'lucide-react'
+import {
+  Check,
+  X,
+  Edit2,
+  AlertCircle,
+  MessageCircle,
+  Loader2,
+} from 'lucide-react'
 import { AudioPlayer } from './AudioPlayer'
+import { ClarificationDialog } from './ClarificationDialog'
 
 interface IssueData {
   title: string
@@ -34,10 +42,47 @@ export function IssuePreview({
 }: IssuePreviewProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedIssue, setEditedIssue] = useState(issue)
+  const [showClarification, setShowClarification] = useState(false)
+  const [isImproving, setIsImproving] = useState(false)
 
   const handleSaveEdit = () => {
     onEdit(editedIssue)
     setIsEditing(false)
+  }
+
+  const handleClarificationComplete = async (
+    answers: Record<string, string>
+  ) => {
+    setIsImproving(true)
+    setShowClarification(false)
+
+    try {
+      // For now, just show a message until Edge Functions are deployed
+      // Log answers for debugging
+      // eslint-disable-next-line no-console
+      console.log('Clarification answers received:', answers)
+      alert(
+        'Clarification feature will be available once Edge Functions are deployed.'
+      )
+
+      // TODO: Once Edge Functions are deployed, uncomment this:
+      // const { data, error } = await supabase.functions.invoke('audio-process', {
+      //   body: {
+      //     audioUrl: audioUrl || '',
+      //     audioDuration: audioDuration || 0,
+      //     repository: repository || '',
+      //     clarificationMode: false,
+      //     context: {
+      //       originalTranscription: transcription,
+      //       previousAnswers: answers
+      //     }
+      //   }
+      // })
+    } catch (err) {
+      console.error('Failed to improve issue:', err)
+    } finally {
+      setIsImproving(false)
+    }
   }
 
   const labelColors: Record<string, string> = {
@@ -48,6 +93,19 @@ export function IssuePreview({
     'high-priority': 'bg-orange-100 text-orange-800',
     frontend: 'bg-cyan-100 text-cyan-800',
     backend: 'bg-indigo-100 text-indigo-800',
+  }
+
+  // Show clarification dialog if requested
+  if (showClarification && issue.needs_clarification) {
+    return (
+      <ClarificationDialog
+        questions={issue.needs_clarification}
+        transcription={transcription}
+        repository={repository || ''}
+        onComplete={handleClarificationComplete}
+        onSkip={() => setShowClarification(false)}
+      />
+    )
   }
 
   return (
@@ -91,11 +149,11 @@ export function IssuePreview({
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                 <div className="flex items-start space-x-2">
                   <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                  <div>
+                  <div className="flex-1">
                     <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">
                       Needs Clarification:
                     </h4>
-                    <ul className="list-disc list-inside space-y-1">
+                    <ul className="list-disc list-inside space-y-1 mb-3">
                       {issue.needs_clarification.map((item, index) => (
                         <li
                           key={index}
@@ -105,6 +163,14 @@ export function IssuePreview({
                         </li>
                       ))}
                     </ul>
+                    <button
+                      onClick={() => setShowClarification(true)}
+                      disabled={isImproving}
+                      className="flex items-center space-x-1 text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100 text-sm font-medium"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Answer questions to improve issue</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -119,14 +185,25 @@ export function IssuePreview({
             </h3>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+              disabled={isImproving}
+              className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Edit2 className="w-4 h-4" />
               <span className="text-sm">Edit</span>
             </button>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4 relative">
+            {isImproving && (
+              <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 rounded-lg flex items-center justify-center z-10">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-2" />
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Improving issue with clarifications...
+                  </p>
+                </div>
+              </div>
+            )}
             {/* Title */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
