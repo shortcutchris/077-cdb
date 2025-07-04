@@ -35,11 +35,23 @@ export function AdminDashboard() {
 
   const loadDashboardStats = async () => {
     try {
-      // Get total users
-      const { count: userCount } = await supabase
-        .from('repository_permissions')
-        .select('user_id', { count: 'exact', head: true })
-        .eq('is_active', true)
+      // Get total users from auth system
+      let userCount = 0
+      try {
+        const { data: allUsers } = await supabase.rpc('get_all_users')
+        userCount = allUsers?.length || 0
+      } catch (error) {
+        // If RPC function doesn't exist, count users with permissions
+        const { data: uniqueUsers } = await supabase
+          .from('repository_permissions')
+          .select('user_id')
+          .eq('is_active', true)
+
+        const uniqueUserIds = [
+          ...new Set(uniqueUsers?.map((u) => u.user_id) || []),
+        ]
+        userCount = uniqueUserIds.length
+      }
 
       // Get active permissions
       const { count: permissionCount } = await supabase
@@ -68,7 +80,7 @@ export function AdminDashboard() {
         .gte('created_at', yesterday.toISOString())
 
       setStats({
-        totalUsers: userCount || 0,
+        totalUsers: userCount,
         activePermissions: permissionCount || 0,
         managedRepositories: repoCount || 0,
         activeTokens: tokenCount || 0,
@@ -116,8 +128,10 @@ export function AdminDashboard() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Admin Dashboard
+        </h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
           Welcome back,{' '}
           {adminRole?.role === 'super_admin'
             ? 'Super Admin'
@@ -131,7 +145,7 @@ export function AdminDashboard() {
           <a
             key={stat.name}
             href={stat.href}
-            className="relative overflow-hidden rounded-lg bg-white p-6 shadow hover:shadow-lg transition-shadow"
+            className="relative overflow-hidden rounded-lg bg-white dark:bg-gray-800 p-6 shadow hover:shadow-lg transition-shadow"
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -141,10 +155,10 @@ export function AdminDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                     {stat.name}
                   </dt>
-                  <dd className="text-2xl font-semibold text-gray-900">
+                  <dd className="text-2xl font-semibold text-gray-900 dark:text-white">
                     {loading ? '-' : stat.value}
                   </dd>
                 </dl>
@@ -156,21 +170,21 @@ export function AdminDashboard() {
 
       {/* Recent Activity */}
       <div className="mt-8">
-        <div className="rounded-lg bg-white shadow">
+        <div className="rounded-lg bg-white dark:bg-gray-800 shadow">
           <div className="p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium text-gray-900">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white">
                 Recent Activity
               </h2>
-              <div className="flex items-center text-sm text-gray-500">
+              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <Activity className="mr-1 h-4 w-4" />
                 <span>{stats.recentActivity} actions in last 24h</span>
               </div>
             </div>
 
             {/* Activity would go here */}
-            <div className="mt-6 text-center text-gray-500 py-12">
-              <TrendingUp className="mx-auto h-12 w-12 text-gray-400" />
+            <div className="mt-6 text-center text-gray-500 dark:text-gray-400 py-12">
+              <TrendingUp className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
               <p className="mt-2">Activity timeline coming soon</p>
             </div>
           </div>

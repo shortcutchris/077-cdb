@@ -16,7 +16,7 @@ import { AdminDashboard } from '@/pages/admin/Dashboard'
 import { AdminTokens } from '@/pages/admin/Tokens'
 import { AdminRepositories } from '@/pages/admin/Repositories'
 import { AdminUsers } from '@/pages/admin/Users'
-import { AdminPermissions } from '@/pages/admin/Permissions'
+import { AdminPermissionsSplitView } from '@/pages/admin/PermissionsSplitView'
 import { AdminAuditLog } from '@/pages/admin/AuditLog'
 
 function App() {
@@ -24,8 +24,8 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100"></div>
       </div>
     )
   }
@@ -60,7 +60,7 @@ function App() {
         <Route path="tokens" element={<AdminTokens />} />
         <Route path="repositories" element={<AdminRepositories />} />
         <Route path="users" element={<AdminUsers />} />
-        <Route path="permissions" element={<AdminPermissions />} />
+        <Route path="permissions" element={<AdminPermissionsSplitView />} />
         <Route path="audit" element={<AdminAuditLog />} />
       </Route>
 

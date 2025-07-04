@@ -246,28 +246,28 @@ export function VoiceRecorder() {
     <div className="max-w-2xl mx-auto space-y-8">
       {/* Repository Selection */}
       {!reposLoading && repositories.length === 0 ? (
-        <div className="rounded-lg bg-amber-50 p-6 text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-amber-400 mb-3" />
-          <h3 className="text-lg font-medium text-amber-900 mb-2">
+        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-6 text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-amber-400 dark:text-amber-500 mb-3" />
+          <h3 className="text-lg font-medium text-amber-900 dark:text-amber-100 mb-2">
             No Repository Access
           </h3>
-          <p className="text-amber-700">
+          <p className="text-amber-700 dark:text-amber-200">
             You don&apos;t have access to any repositories yet. Please contact
             an administrator to grant you permissions.
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow p-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Target Repository
           </label>
           <div className="relative">
-            <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
             <select
               value={selectedRepository}
               onChange={(e) => setSelectedRepository(e.target.value)}
               disabled={reposLoading || repositories.length === 0}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {reposLoading ? (
                 <option>Loading repositories...</option>
@@ -293,7 +293,7 @@ export function VoiceRecorder() {
         <div className="text-center space-y-6">
           {/* Timer Display */}
           {(recordingState !== 'idle' || recordingTime > 0) && (
-            <div className="text-4xl font-mono font-bold text-gray-900">
+            <div className="text-4xl font-mono font-bold text-gray-900 dark:text-gray-100">
               {formatTime(recordingTime)} / {formatTime(120)}
             </div>
           )}
@@ -360,7 +360,7 @@ export function VoiceRecorder() {
 
           {/* Error Display */}
           {(error || recordingError) && (
-            <div className="max-w-md mx-auto bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="max-w-md mx-auto bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
               {error || recordingError}
             </div>
           )}
@@ -370,10 +370,12 @@ export function VoiceRecorder() {
             <div className="space-y-4">
               <div className="flex items-center justify-center space-x-3">
                 <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                <span className="text-gray-700">{getProcessingMessage()}</span>
+                <span className="text-gray-700 dark:text-gray-300">
+                  {getProcessingMessage()}
+                </span>
               </div>
               {processingState === 'uploading' && uploadProgress > 0 && (
-                <div className="w-full max-w-xs mx-auto bg-gray-200 rounded-full h-2">
+                <div className="w-full max-w-xs mx-auto bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-blue-500 h-2 rounded-full transition-all"
                     style={{ width: `${uploadProgress}%` }}
@@ -392,7 +394,7 @@ export function VoiceRecorder() {
                 <div className="flex justify-center space-x-4">
                   <button
                     onClick={handleStartRecording}
-                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     New Recording
                   </button>
@@ -408,7 +410,7 @@ export function VoiceRecorder() {
 
           {/* Instructions */}
           {recordingState === 'idle' && !audioBlob && (
-            <div className="text-gray-600 space-y-2">
+            <div className="text-gray-600 dark:text-gray-400 space-y-2">
               <p>Click the microphone to start recording</p>
               <p className="text-sm">Maximum recording time: 2 minutes</p>
             </div>

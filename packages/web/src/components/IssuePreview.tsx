@@ -53,12 +53,14 @@ export function IssuePreview({
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Issue Preview</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Issue Preview
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
           Review and edit your generated issue before creating it
         </p>
         {repository && (
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Target repository: <span className="font-mono">{repository}</span>
           </p>
         )}
@@ -67,7 +69,7 @@ export function IssuePreview({
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Original Transcription */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Original Recording
           </h3>
 
@@ -75,23 +77,30 @@ export function IssuePreview({
             <AudioPlayer audioUrl={audioUrl} duration={audioDuration} />
           )}
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-700 mb-2">Transcription:</h4>
-            <p className="text-gray-600 whitespace-pre-wrap">{transcription}</p>
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Transcription:
+            </h4>
+            <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+              {transcription}
+            </p>
           </div>
 
           {issue.needs_clarification &&
             issue.needs_clarification.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                 <div className="flex items-start space-x-2">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-yellow-800 mb-2">
+                    <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">
                       Needs Clarification:
                     </h4>
                     <ul className="list-disc list-inside space-y-1">
                       {issue.needs_clarification.map((item, index) => (
-                        <li key={index} className="text-yellow-700 text-sm">
+                        <li
+                          key={index}
+                          className="text-yellow-700 dark:text-yellow-300 text-sm"
+                        >
                           {item}
                         </li>
                       ))}
@@ -105,22 +114,22 @@ export function IssuePreview({
         {/* Generated Issue */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Generated Issue
             </h3>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700"
+              className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
             >
               <Edit2 className="w-4 h-4" />
               <span className="text-sm">Edit</span>
             </button>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4">
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Title
               </label>
               {isEditing ? (
@@ -130,10 +139,10 @@ export function IssuePreview({
                   onChange={(e) =>
                     setEditedIssue({ ...editedIssue, title: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <h4 className="text-xl font-semibold text-gray-900">
+                <h4 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {issue.title}
                 </h4>
               )}
@@ -141,7 +150,7 @@ export function IssuePreview({
 
             {/* Labels */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Labels
               </label>
               <div className="flex flex-wrap gap-2">
@@ -180,7 +189,7 @@ export function IssuePreview({
 
             {/* Body */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description
               </label>
               {isEditing ? (
@@ -190,11 +199,11 @@ export function IssuePreview({
                     setEditedIssue({ ...editedIssue, body: e.target.value })
                   }
                   rows={15}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                 />
               ) : (
-                <div className="prose prose-sm max-w-none">
-                  <pre className="whitespace-pre-wrap font-sans">
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <pre className="whitespace-pre-wrap font-sans dark:text-gray-300">
                     {issue.body}
                   </pre>
                 </div>
@@ -211,13 +220,13 @@ export function IssuePreview({
                     setEditedIssue(issue)
                     setIsEditing(false)
                   }}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Cancel Edit
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+                  className="px-4 py-2 text-white bg-blue-500 dark:bg-blue-600 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700"
                 >
                   Save Changes
                 </button>
@@ -226,14 +235,14 @@ export function IssuePreview({
               <>
                 <button
                   onClick={onCancel}
-                  className="flex items-center space-x-2 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   <X className="w-4 h-4" />
                   <span>Cancel</span>
                 </button>
                 <button
                   onClick={onConfirm}
-                  className="flex items-center space-x-2 px-4 py-2 text-white bg-green-500 rounded-lg hover:bg-green-600"
+                  className="flex items-center space-x-2 px-4 py-2 text-white bg-green-500 dark:bg-green-600 rounded-lg hover:bg-green-600 dark:hover:bg-green-700"
                 >
                   <Check className="w-4 h-4" />
                   <span>Create Issue</span>

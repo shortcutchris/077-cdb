@@ -114,8 +114,10 @@ export function AdminRepositories() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Repositories</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Repositories
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             Manage repositories synchronized from GitHub
           </p>
         </div>
@@ -135,20 +137,20 @@ export function AdminRepositories() {
       </div>
 
       {!hasTokens && (
-        <div className="mb-6 rounded-lg bg-amber-50 p-4">
+        <div className="mb-6 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4">
           <div className="flex">
-            <AlertCircle className="h-5 w-5 text-amber-400" />
+            <AlertCircle className="h-5 w-5 text-amber-400 dark:text-amber-300" />
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-amber-800">
+              <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
                 No Access Tokens
               </h3>
-              <p className="mt-1 text-sm text-amber-700">
+              <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
                 Please add a GitHub Personal Access Token before syncing
                 repositories.
               </p>
               <a
                 href="/admin/tokens"
-                className="text-sm text-amber-800 underline"
+                className="text-sm text-amber-800 dark:text-amber-200 underline"
               >
                 Go to Tokens →
               </a>
@@ -161,19 +163,19 @@ export function AdminRepositories() {
       <div className="mb-6 flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search repositories..."
-              className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white pl-10 pr-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
         </div>
 
         <div className="flex items-center space-x-2">
-          <Filter className="h-4 w-4 text-gray-500" />
+          <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <select
             value={
               filterPrivate === null
@@ -186,7 +188,7 @@ export function AdminRepositories() {
               const value = e.target.value
               setFilterPrivate(value === 'all' ? null : value === 'private')
             }}
-            className="rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="all">All Repositories</option>
             <option value="public">Public Only</option>
@@ -196,24 +198,24 @@ export function AdminRepositories() {
       </div>
 
       {/* Repository List */}
-      <div className="rounded-lg bg-white shadow">
+      <div className="rounded-lg bg-white dark:bg-gray-800 shadow">
         <div className="p-6">
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-flex items-center text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="inline-flex items-center text-gray-500 dark:text-gray-400">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
                 <span className="ml-2">Loading repositories...</span>
               </div>
             </div>
           ) : filteredRepositories.length === 0 ? (
             <div className="text-center py-12">
-              <GitBranch className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
+              <GitBranch className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                 {searchTerm || filterPrivate !== null
                   ? 'No repositories found'
                   : 'No repositories'}
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {hasTokens
                   ? 'Click "Sync Repositories" to fetch repositories from GitHub.'
                   : 'Add a token first, then sync repositories.'}
@@ -224,26 +226,26 @@ export function AdminRepositories() {
               {filteredRepositories.map((repo) => (
                 <div
                   key={repo.repository_full_name}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
+                  className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="rounded-full bg-gray-100 p-2">
+                    <div className="rounded-full bg-gray-100 dark:bg-gray-700 p-2">
                       {repo.is_private ? (
-                        <Lock className="h-5 w-5 text-gray-600" />
+                        <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                       ) : (
-                        <Unlock className="h-5 w-5 text-gray-600" />
+                        <Unlock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                       )}
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100">
                         {repo.repository_full_name}
                       </h3>
                       {repo.description && (
-                        <p className="mt-1 text-sm text-gray-500 line-clamp-1">
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
                           {repo.description}
                         </p>
                       )}
-                      <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
+                      <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                         <span>{repo.is_private ? 'Private' : 'Public'}</span>
                         {repo.default_branch && (
                           <span>Branch: {repo.default_branch}</span>
@@ -259,7 +261,7 @@ export function AdminRepositories() {
 
                   <a
                     href={`/admin/permissions?repo=${repo.repository_full_name}`}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                   >
                     Manage Permissions →
                   </a>

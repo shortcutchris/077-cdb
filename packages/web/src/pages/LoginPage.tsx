@@ -14,20 +14,20 @@ export function LoginPage() {
   }, [user, navigate])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-gray-100">
             Welcome to SpecifAI
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Transform your voice into GitHub issues in seconds
           </p>
         </div>
 
         <div className="mt-8 space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -40,7 +40,7 @@ export function LoginPage() {
             Sign in with GitHub
           </button>
 
-          <p className="text-xs text-center text-gray-600">
+          <p className="text-xs text-center text-gray-600 dark:text-gray-400">
             By signing in, you agree to authorize SpecifAI to access your GitHub
             account for creating issues in repositories you have access to.
           </p>

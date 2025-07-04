@@ -103,14 +103,16 @@ export function AdminTokens() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Access Tokens</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Access Tokens
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             Manage GitHub Personal Access Tokens for repository synchronization
           </p>
         </div>
         <button
           onClick={() => setShowAddToken(true)}
-          className="flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          className="flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
         >
           <Plus className="h-4 w-4" />
           <span>Add Token</span>
@@ -119,17 +121,19 @@ export function AdminTokens() {
 
       {/* Add Token Form */}
       {showAddToken && (
-        <div className="mb-6 rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-4 text-lg font-semibold">Add New Token</h2>
+        <div className="mb-6 rounded-lg bg-white dark:bg-gray-800 p-6 shadow">
+          <h2 className="mb-4 text-lg font-semibold dark:text-white">
+            Add New Token
+          </h2>
 
-          <div className="mb-4 rounded-lg bg-amber-50 p-4">
+          <div className="mb-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4">
             <div className="flex">
-              <AlertCircle className="h-5 w-5 text-amber-400" />
+              <AlertCircle className="h-5 w-5 text-amber-400 dark:text-amber-300" />
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-amber-800">
+                <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
                   Required GitHub Token Scopes
                 </h3>
-                <div className="mt-2 text-sm text-amber-700">
+                <div className="mt-2 text-sm text-amber-700 dark:text-amber-300">
                   <ul className="list-disc list-inside space-y-1">
                     <li>
                       <code>repo</code> - Full control of private repositories
@@ -142,7 +146,7 @@ export function AdminTokens() {
                     href="https://github.com/settings/tokens/new"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center text-amber-800 hover:text-amber-900"
+                    className="mt-2 inline-flex items-center text-amber-800 dark:text-amber-200 hover:text-amber-900 dark:hover:text-amber-100"
                   >
                     Create token on GitHub
                     <ExternalLink className="ml-1 h-3 w-3" />
@@ -155,7 +159,7 @@ export function AdminTokens() {
           <form onSubmit={handleAddToken}>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Token Name
                 </label>
                 <input
@@ -164,13 +168,13 @@ export function AdminTokens() {
                   onChange={(e) =>
                     setNewToken({ ...newToken, name: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="e.g., Main Organization Token"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Personal Access Token
                 </label>
                 <input
@@ -179,14 +183,16 @@ export function AdminTokens() {
                   onChange={(e) =>
                     setNewToken({ ...newToken, token: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="ghp_..."
                 />
               </div>
 
               {error && (
-                <div className="rounded-md bg-red-50 p-4">
-                  <p className="text-sm text-red-800">{error}</p>
+                <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+                  <p className="text-sm text-red-800 dark:text-red-200">
+                    {error}
+                  </p>
                 </div>
               )}
 
@@ -198,13 +204,13 @@ export function AdminTokens() {
                     setNewToken({ name: '', token: '' })
                     setError(null)
                   }}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  className="rounded-md bg-blue-600 dark:bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:hover:bg-blue-600"
                 >
                   Add Token
                 </button>
@@ -215,22 +221,22 @@ export function AdminTokens() {
       )}
 
       {/* Tokens List */}
-      <div className="rounded-lg bg-white shadow">
+      <div className="rounded-lg bg-white dark:bg-gray-800 shadow">
         <div className="p-6">
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-flex items-center text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="inline-flex items-center text-gray-500 dark:text-gray-400">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
                 <span className="ml-2">Loading tokens...</span>
               </div>
             </div>
           ) : tokens.length === 0 ? (
             <div className="text-center py-12">
-              <Key className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
+              <Key className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                 No tokens
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Get started by adding a new Personal Access Token.
               </p>
             </div>
@@ -241,17 +247,17 @@ export function AdminTokens() {
                 .map((token) => (
                   <div
                     key={token.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-200 p-4"
+                    className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="rounded-full bg-gray-100 p-2">
-                        <Key className="h-5 w-5 text-gray-600" />
+                      <div className="rounded-full bg-gray-100 dark:bg-gray-700 p-2">
+                        <Key className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-900">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">
                           {token.token_name}
                         </h3>
-                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                           {token.github_username && (
                             <span>@{token.github_username}</span>
                           )}
@@ -278,7 +284,7 @@ export function AdminTokens() {
 
                     <button
                       onClick={() => handleDeleteToken(token.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                     >
                       <Trash2 className="h-5 w-5" />
                     </button>
