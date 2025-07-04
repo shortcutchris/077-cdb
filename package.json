@@ -10,7 +10,7 @@
     "test": "pnpm --recursive run test",
     "lint": "pnpm --recursive run lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "prepare": "husky install"
+    "prepare": "node -e \"if(process.env.HUSKY === '0' || process.env.NODE_ENV === 'production') process.exit(0)\" || husky install"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
