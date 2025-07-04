@@ -42,7 +42,7 @@ specifai/
 
 - **Frontend**: React 18, Vite, TypeScript, shadcn/ui, Tailwind CSS
 - **Backend**: Supabase (Auth, Database, Edge Functions, Realtime)
-- **AI**: OpenAI Whisper v4 + GPT-4o
+- **AI**: OpenAI Whisper API + GPT-4o
 - **Deployment**: Vercel (Frontend), Supabase (Backend), Replit (Alternative)
 
 ## 📝 Development
@@ -143,6 +143,7 @@ The `.replit` file is pre-configured with:
 - **OAuth Redirect Error**: Check `/debug` page for actual redirect URLs being sent
 - **CORS Issues**: Ensure all Replit domains are in allowed hosts in `vite.config.ts`
 - **Environment Variables**: All client-side vars must start with `VITE_`
+- **Edge Function Calls**: Always use Supabase SDK's `invoke()` method, NOT direct fetch to `/functions/v1/`
 
 ### Resource Requirements
 
@@ -156,6 +157,32 @@ The `.replit` file is pre-configured with:
 3. **GitHub Integration**: Direct issue creation with labels and assignees
 4. **Realtime Updates**: Live status tracking via Supabase
 5. **Coding Agent**: Autonomous PR generation for ready-for-dev issues
+
+## 🔧 Edge Functions
+
+SpecifAI uses Supabase Edge Functions for serverless operations:
+
+### Deployed Functions
+
+- `github-create-issue`: Creates GitHub issues from voice recordings
+
+### Important: Function Invocation
+
+Always use the Supabase SDK for Edge Functions:
+
+```javascript
+// ✅ Correct - Use Supabase SDK
+const { data, error } = await supabase.functions.invoke('function-name', {
+  body: {
+    /* payload */
+  },
+})
+
+// ❌ Wrong - Direct fetch will fail
+const response = await fetch(`${SUPABASE_URL}/functions/v1/function-name`)
+```
+
+The SDK handles authentication and knows the correct internal URL structure.
 
 ## 🔐 Security
 

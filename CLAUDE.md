@@ -93,6 +93,7 @@ The system follows this architecture:
    - Removed `min-width: 600px` from admin.css media query
    - Added `overflow-hidden` to AdminLayout main container
    - Use card layouts on mobile instead of tables
+6. **Edge Functions**: WICHTIG! Verwende IMMER Supabase SDK's `invoke()` Method für Edge Functions, NICHT direkten fetch mit `/functions/v1/`. Der SDK kennt die korrekte interne URL-Struktur.
 
 ### API Keys (in .env)
 
@@ -160,4 +161,4 @@ Always use TodoRead/TodoWrite tools to track progress. Document everything direc
 
 ---
 
-Last updated: 2025-07-03
+Last updated: 2025-07-04
