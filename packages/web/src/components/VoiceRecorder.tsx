@@ -149,7 +149,7 @@ export function VoiceRecorder({
           ).toISOString(), // 30 days from now
         })
         .select()
-        .single()
+        .maybeSingle()
 
       if (dbError) throw dbError
 

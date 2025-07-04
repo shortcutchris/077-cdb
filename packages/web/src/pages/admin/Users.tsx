@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react'
-import { User, UserCheck, UserX, Search, Mail } from 'lucide-react'
+import {
+  User,
+  UserCheck,
+  UserX,
+  Search,
+  Mail,
+  ShieldCheck,
+  AlertCircle,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAdmin } from '@/contexts/AdminContext'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
@@ -11,6 +19,7 @@ interface UserWithPermissions {
   last_sign_in_at: string | null
   permissions_count: number
   is_admin: boolean
+  email_confirmed_at: string | null
 }
 
 export function AdminUsers() {
@@ -72,6 +81,7 @@ export function AdminUsers() {
           last_sign_in_at: user.last_sign_in_at,
           permissions_count: userPermissionCounts[user.id] || 0,
           is_admin: adminUserIds.has(user.id),
+          email_confirmed_at: user.email_confirmed_at,
         })
       )
 
@@ -162,6 +172,25 @@ export function AdminUsers() {
       setError(
         err instanceof Error ? err.message : 'Failed to update admin status'
       )
+    }
+  }
+
+  const verifyUser = async (userId: string, userEmail: string) => {
+    try {
+      setError(null)
+      setSuccess(null)
+
+      const { error } = await supabase.rpc('admin_verify_user', {
+        target_user_id: userId,
+      })
+
+      if (error) throw error
+
+      setSuccess(`User ${userEmail} has been verified`)
+      await loadUsers()
+    } catch (err) {
+      console.error('Error verifying user:', err)
+      setError(err instanceof Error ? err.message : 'Failed to verify user')
     }
   }
 
@@ -338,17 +367,25 @@ export function AdminUsers() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {user.is_admin ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
-                        <UserCheck className="h-3 w-3" />
-                        Admin
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-                        <User className="h-3 w-3" />
-                        User
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {user.is_admin ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
+                          <UserCheck className="h-3 w-3" />
+                          Admin
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                          <User className="h-3 w-3" />
+                          User
+                        </span>
+                      )}
+                      {!user.email_confirmed_at && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
+                          <AlertCircle className="h-3 w-3" />
+                          Unverified
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {user.permissions_count} repositories
@@ -363,6 +400,16 @@ export function AdminUsers() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
+                      {/* Verify button for unverified users */}
+                      {!user.email_confirmed_at && (
+                        <button
+                          onClick={() => verifyUser(user.id, user.email)}
+                          className="inline-flex items-center gap-1 px-3 py-1 text-sm rounded-lg text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          Verify
+                        </button>
+                      )}
                       {/* Don't allow admins to remove their own admin status */}
                       {user.id !== adminRole?.user_id && (
                         <button

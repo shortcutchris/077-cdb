@@ -58,7 +58,7 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
       .eq('is_active', true)
-      .single()
+      .maybeSingle()
 
     // If not admin, check repository permissions
     if (!adminUser) {
@@ -68,7 +68,7 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .eq('repository_full_name', repository)
         .eq('can_create_issues', true)
-        .single()
+        .maybeSingle()
 
       if (permError || !permission) {
         throw new Error(
@@ -82,7 +82,7 @@ serve(async (req) => {
       .from('managed_repositories')
       .select('*')
       .eq('repository_full_name', repository)
-      .single()
+      .maybeSingle()
 
     if (repoError || !repo) {
       throw new Error(`Repository ${repository} not found in system`)
@@ -93,8 +93,9 @@ serve(async (req) => {
       .from('admin_tokens')
       .select('*')
       .eq('is_active', true)
+      .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (tokenError || !token) {
       throw new Error('No active GitHub token available')

@@ -7,10 +7,14 @@ import { Link } from 'react-router-dom'
 
 export function UserMenu() {
   const { user, signOut } = useAuth()
-  const { isAdmin } = useAdmin()
+  const adminContext = useAdmin()
   const { theme, toggleTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Extract admin values with explicit checks
+  const isAdmin = adminContext.isAdmin === true
+  const adminLoading = adminContext.loading === true
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -71,7 +75,8 @@ export function UserMenu() {
               </a>
             )}
 
-            {isAdmin && (
+            {/* Admin Dashboard Link - Only show when confirmed admin */}
+            {adminLoading === false && isAdmin === true && (
               <Link
                 to="/admin"
                 onClick={() => setIsOpen(false)}

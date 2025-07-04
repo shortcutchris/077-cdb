@@ -48,8 +48,11 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
   const [filteredIssues, setFilteredIssues] = useState<GitHubIssue[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<'all' | 'open' | 'closed'>('all')
+  const [filter, setFilter] = useState<'all' | 'open' | 'closed' | 'mine'>(
+    'all'
+  )
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [myIssueNumbers, setMyIssueNumbers] = useState<number[]>([])
 
   useEffect(() => {
     if (repository) {
@@ -61,7 +64,7 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
   useEffect(() => {
     filterIssues()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [issues, filter])
+  }, [issues, filter, myIssueNumbers])
 
   useEffect(() => {
     if (onIssueCreated) {
@@ -92,7 +95,7 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .single()
+        .maybeSingle()
 
       // If not admin, check specific repository permission
       if (!adminUser) {
@@ -102,7 +105,7 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
           .eq('user_id', user.id)
           .eq('repository_full_name', repository)
           .eq('is_active', true)
-          .single()
+          .maybeSingle()
 
         if (permError || !permission) {
           throw new Error(
@@ -117,7 +120,7 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
         .select('encrypted_token')
         .eq('is_active', true)
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (tokenError || !tokenData) {
         // Try public API as fallback
@@ -148,7 +151,7 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
       } else {
         // Use token to access private repositories
         const [owner, repo] = repository.split('/')
-        const token = tokenData.encrypted_token // Note: In production, this should be properly encrypted
+        const token = tokenData.encrypted_token
 
         const response = await fetch(
           `https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100`,
@@ -171,6 +174,19 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
         const issuesOnly = data.filter((item) => !item.pull_request)
         setIssues(issuesOnly)
       }
+
+      // Load user's created issues from Supabase
+      if (user) {
+        const { data: userIssues, error: historyError } = await supabase
+          .from('issues_history')
+          .select('issue_number')
+          .eq('repository_full_name', repository)
+          .eq('created_by', user.id)
+
+        if (!historyError && userIssues) {
+          setMyIssueNumbers(userIssues.map((item) => item.issue_number))
+        }
+      }
     } catch (err) {
       console.error('Error loading issues:', err)
       setError(err instanceof Error ? err.message : 'Failed to load issues')
@@ -186,18 +202,22 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
     if (filter === 'open' || filter === 'closed') {
       filtered = filtered.filter((issue) => issue.state === filter)
     } else if (filter === 'mine') {
-      // Filter by issues created by the current user
+      // Hybrid approach: Check both Supabase history and GitHub username
       const githubUsername =
         user?.user_metadata?.user_name ||
         user?.user_metadata?.preferred_username
-      if (githubUsername) {
-        filtered = filtered.filter(
-          (issue) => issue.user.login === githubUsername
-        )
-      } else {
-        // If we can't get the GitHub username, show no issues
-        filtered = []
-      }
+
+      filtered = filtered.filter((issue) => {
+        // Check if issue was created by user via SpecifAI (in Supabase)
+        if (myIssueNumbers.includes(issue.number)) {
+          return true
+        }
+        // Also check if created directly on GitHub
+        if (githubUsername && issue.user.login === githubUsername) {
+          return true
+        }
+        return false
+      })
     }
 
     // Sort by created date (newest first)
@@ -325,10 +345,16 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
                   const githubUsername =
                     user?.user_metadata?.user_name ||
                     user?.user_metadata?.preferred_username
-                  return githubUsername
-                    ? issues.filter((i) => i.user.login === githubUsername)
-                        .length
-                    : 0
+
+                  // Count issues created by user (hybrid approach)
+                  return issues.filter((issue) => {
+                    // Check Supabase history
+                    if (myIssueNumbers.includes(issue.number)) return true
+                    // Check GitHub username
+                    if (githubUsername && issue.user.login === githubUsername)
+                      return true
+                    return false
+                  }).length
                 })()}
                 )
               </span>

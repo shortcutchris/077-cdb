@@ -13,7 +13,7 @@ export function ProtectedAdminRoute({
   requireSuperAdmin = false,
 }: ProtectedAdminRouteProps) {
   const { user, loading: authLoading } = useAuth()
-  const { isSuperAdmin, loading: adminLoading } = useAdmin()
+  const { isAdmin, isSuperAdmin, loading: adminLoading } = useAdmin()
 
   if (authLoading || adminLoading) {
     return (
@@ -25,17 +25,17 @@ export function ProtectedAdminRoute({
 
   // First check if user is authenticated
   if (!user) {
-    return <Navigate to="/auth/signin" replace />
+    return <Navigate to="/login" replace />
   }
 
-  // Temporarily allow access for testing
-  // if (!isAdmin) {
-  //   return <Navigate to="/" replace />
-  // }
+  // Check if user is admin
+  if (!isAdmin) {
+    return <Navigate to="/" replace />
+  }
 
+  // Check if super admin is required
   if (requireSuperAdmin && !isSuperAdmin) {
-    // Temporarily disabled for testing
-    // return <Navigate to="/admin" replace />
+    return <Navigate to="/admin" replace />
   }
 
   return <>{children}</>

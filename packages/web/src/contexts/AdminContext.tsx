@@ -33,18 +33,24 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      // Try to check admin status
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .single()
+        .maybeSingle()
 
-      if (error) {
-        // Not an admin or error
-        setAdminRole(null)
-      } else {
+      if (error && error.code !== 'PGRST116') {
+        // Only log real errors, not "no rows" errors
+        console.error('Error checking admin status:', error)
+      }
+
+      // Always set adminRole based on data - be explicit
+      if (data) {
         setAdminRole(data)
+      } else {
+        setAdminRole(null)
       }
     } catch (error) {
       console.error('Error checking admin status:', error)
@@ -60,8 +66,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [user])
 
   const value: AdminContextType = {
-    isAdmin: !!adminRole,
-    isSuperAdmin: adminRole?.role === 'super_admin',
+    isAdmin: adminRole !== null && adminRole !== undefined,
+    isSuperAdmin: adminRole?.role === 'super_admin' || false,
     adminRole,
     loading,
     checkAdminStatus,

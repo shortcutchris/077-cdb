@@ -10,6 +10,7 @@ import { AdminLayout } from '@/layouts/AdminLayout'
 // Pages
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
+import { SignupPage } from '@/pages/SignupPage'
 
 // Admin Pages
 import { AdminDashboard } from '@/pages/admin/Dashboard'
@@ -34,6 +35,7 @@ function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
 
       {/* Protected routes */}
       <Route
