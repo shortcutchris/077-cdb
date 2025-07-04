@@ -17,6 +17,8 @@ export const getCorsHeaders = (origin: string | null) => {
     'http://localhost:3000',
     'https://*.repl.co', // Replit domains
     'https://*.replit.dev', // New Replit domains
+    'https://*.replit.app', // Replit production domains
+    'https://077-cdb.replit.app', // Specific production URL
     process.env.ALLOWED_ORIGIN, // Custom domain from env
   ].filter(Boolean)
 
