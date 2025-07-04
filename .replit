@@ -5,17 +5,17 @@ hidden = [".git", "node_modules", ".env", ".env.local", ".cache", "dist", ".vite
 # Development run command
 run = """
   cd packages/web
-  npm install
+  npm install --legacy-peer-deps
   npm run build
   npm run preview -- --host 0.0.0.0 --port 3000
 """
 
 # Production deployment configuration
 [deployment]
-build = ["sh", "-c", "cd packages/web && npm install && npm run build"]
+build = ["sh", "-c", "cd packages/web && npm install --legacy-peer-deps && npm run build"]
 run = ["sh", "-c", "cd packages/web && npm run preview -- --host 0.0.0.0 --port 3000"]
-deploymentTarget = "static"
-publicDir = "packages/web/dist"
+deploymentTarget = "cloudrun"
+ignorePaths = ["node_modules", ".git", "*.md"]
 
 [nix]
 channel = "stable-24_11"
