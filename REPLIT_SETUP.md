@@ -23,6 +23,18 @@ VITE_SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 VITE_OPENAI_API_KEY = [Dein OpenAI API Key]
 ```
 
+### WICHTIG - Replit URL Secret:
+
+```
+VITE_APP_URL = https://[dein-replit-name].[dein-username].repl.co
+```
+
+**Beispiel:** Wenn deine Replit URL `https://077-cdb.johndoe.repl.co` ist, dann:
+
+```
+VITE_APP_URL = https://077-cdb.johndoe.repl.co
+```
+
 ### Optional (wenn du einen eigenen Key hast):
 
 ```

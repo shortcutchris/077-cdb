@@ -54,3 +54,14 @@ export const getApiUrl = () => {
   }
   return import.meta.env.VITE_SUPABASE_URL
 }
+
+// Get the correct redirect URL for OAuth
+export const getRedirectUrl = () => {
+  // If we have a custom app URL set, use that
+  if (import.meta.env.VITE_APP_URL) {
+    return import.meta.env.VITE_APP_URL
+  }
+
+  // Otherwise use the current origin
+  return window.location.origin
+}
