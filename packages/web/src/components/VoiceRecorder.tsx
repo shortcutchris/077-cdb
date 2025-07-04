@@ -26,7 +26,17 @@ type ProcessingState =
   | 'complete'
   | 'error'
 
-export function VoiceRecorder() {
+interface VoiceRecorderProps {
+  onRepositoryChange?: (repository: string) => void
+  onIssueCreated?: () => void
+  initialRepository?: string
+}
+
+export function VoiceRecorder({
+  onRepositoryChange,
+  onIssueCreated,
+  initialRepository,
+}: VoiceRecorderProps) {
   const { user } = useAuth()
   const { repositories, loading: reposLoading } = useUserRepositories()
   const {
@@ -52,7 +62,16 @@ export function VoiceRecorder() {
   const [error, setError] = useState<string | null>(null)
   const [uploadProgress] = useState(0)
   const [storageUrl, setStorageUrl] = useState<string | null>(null)
-  const [selectedRepository, setSelectedRepository] = useState<string>('')
+  const [selectedRepository, setSelectedRepository] = useState<string>(
+    initialRepository || ''
+  )
+
+  // Update selected repository when initialRepository changes
+  useEffect(() => {
+    if (initialRepository) {
+      setSelectedRepository(initialRepository)
+    }
+  }, [initialRepository])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -223,6 +242,9 @@ export function VoiceRecorder() {
             )
             window.open(responseData.data.html_url, '_blank')
 
+            // Notify parent component that an issue was created
+            onIssueCreated?.()
+
             // Reset state
             setGeneratedIssue(null)
             setProcessingState('idle')
@@ -265,7 +287,10 @@ export function VoiceRecorder() {
             <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
             <select
               value={selectedRepository}
-              onChange={(e) => setSelectedRepository(e.target.value)}
+              onChange={(e) => {
+                setSelectedRepository(e.target.value)
+                onRepositoryChange?.(e.target.value)
+              }}
               disabled={reposLoading || repositories.length === 0}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >

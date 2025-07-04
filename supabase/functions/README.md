@@ -31,7 +31,25 @@ Creates a GitHub issue in the specified repository.
 - **Auth**: Required
 - **Permissions**: User must have permission for the target repository
 
-### 4. `admin-verify`
+### 4. `github-list-issues`
+
+Lists all issues for a specified repository.
+
+- **Endpoint**: `/functions/v1/github-list-issues`
+- **Method**: POST
+- **Auth**: Required
+- **Permissions**: User must have permission for the target repository
+- **Request Body**:
+  ```json
+  {
+    "repository": "owner/repo",
+    "state": "all" | "open" | "closed",
+    "per_page": 100,
+    "page": 1
+  }
+  ```
+
+### 5. `admin-verify`
 
 Verifies if the authenticated user is an admin.
 
