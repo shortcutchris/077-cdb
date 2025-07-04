@@ -11,14 +11,14 @@ export function MainLayout() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-4 lg:py-6">
             <Link
               to="/"
-              className="text-2xl font-bold text-gray-900 dark:text-white"
+              className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white"
             >
               SpecifAI
             </Link>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 lg:space-x-4">
               {/* Temporarily show admin link always for testing */}
               <Link
                 to="/admin"
@@ -31,8 +31,8 @@ export function MainLayout() {
                       : 'Admin Panel (Testing)'
                 }
               >
-                <Shield className="h-5 w-5" />
-                <span>Admin</span>
+                <Shield className="h-4 w-4 lg:h-5 lg:w-5" />
+                <span className="hidden sm:inline">Admin</span>
               </Link>
               <UserMenu />
             </div>
@@ -40,7 +40,7 @@ export function MainLayout() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="flex-1">
         <Outlet />
       </main>
     </div>

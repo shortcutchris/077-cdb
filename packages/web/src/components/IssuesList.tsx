@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import {
   GitPullRequest,
-  GitIssueOpened,
-  GitIssueClosed,
+  CircleDot,
+  CheckCircle2,
   Filter,
   RefreshCw,
   ExternalLink,
@@ -76,19 +76,50 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
     setError(null)
 
     try {
-      // Try using the Edge Function first
-      const { data: functionData, error: functionError } =
-        await supabase.functions.invoke('github-list-issues', {
-          body: {
-            repository,
-            state: 'all',
-            per_page: 100,
-          },
-        })
+      // First, check if user has permission for this repository
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('Not authenticated')
+      }
 
-      if (functionError || !functionData?.data) {
-        // Fallback to direct GitHub API for public repos
-        console.warn('Edge Function not available, falling back to direct API')
+      // Check if user is admin
+      const { data: adminUser } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single()
+
+      // If not admin, check specific repository permission
+      if (!adminUser) {
+        const { data: permission, error: permError } = await supabase
+          .from('repository_permissions')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('repository_full_name', repository)
+          .eq('is_active', true)
+          .single()
+
+        if (permError || !permission) {
+          throw new Error(
+            `You don't have permission to view issues in ${repository}`
+          )
+        }
+      }
+
+      // Now get a GitHub token from the database
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('admin_tokens')
+        .select('encrypted_token')
+        .eq('is_active', true)
+        .limit(1)
+        .single()
+
+      if (tokenError || !tokenData) {
+        // Try public API as fallback
+        console.log('No token available, trying public API')
         const [owner, repo] = repository.split('/')
 
         const response = await fetch(
@@ -101,6 +132,11 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
         )
 
         if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(
+              'Repository not found or is private. GitHub authentication required.'
+            )
+          }
           throw new Error(`GitHub API error: ${response.status}`)
         }
 
@@ -108,7 +144,30 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
         const issuesOnly = data.filter((item) => !item.pull_request)
         setIssues(issuesOnly)
       } else {
-        setIssues(functionData.data)
+        // Use token to access private repositories
+        const [owner, repo] = repository.split('/')
+        const token = tokenData.encrypted_token // Note: In production, this should be properly encrypted
+
+        const response = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100`,
+          {
+            headers: {
+              Accept: 'application/vnd.github.v3+json',
+              Authorization: `token ${token}`,
+            },
+          }
+        )
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Repository not found or you don't have access.")
+          }
+          throw new Error(`GitHub API error: ${response.status}`)
+        }
+
+        const data: GitHubIssue[] = await response.json()
+        const issuesOnly = data.filter((item) => !item.pull_request)
+        setIssues(issuesOnly)
       }
     } catch (err) {
       console.error('Error loading issues:', err)
@@ -145,16 +204,16 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
       return <GitPullRequest className="h-5 w-5" />
     }
     return issue.state === 'open' ? (
-      <GitIssueOpened className="h-5 w-5 text-green-600 dark:text-green-400" />
+      <CircleDot className="h-5 w-5 text-green-600 dark:text-green-400" />
     ) : (
-      <GitIssueClosed className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+      <CheckCircle2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
     )
   }
 
   if (!repository) {
     return (
       <div className="text-center py-12">
-        <GitIssueOpened className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+        <CircleDot className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
         <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
           No repository selected
         </h3>
@@ -166,17 +225,17 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
           Issues in {repository}
         </h2>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
           className={cn(
-            'p-2 rounded-lg transition-colors',
+            'p-2 rounded-lg transition-colors flex-shrink-0',
             'hover:bg-gray-100 dark:hover:bg-gray-800',
             'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
@@ -191,15 +250,15 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center space-x-2">
-        <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-        <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1">
+      <div className="flex items-center space-x-2 mb-4 overflow-x-auto">
+        <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+        <div className="flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1">
           <button
             onClick={() => setFilter('all')}
             className={cn(
-              'px-3 py-1 rounded-md text-sm font-medium transition-colors',
+              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
               filter === 'all'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             )}
           >
@@ -208,9 +267,9 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
           <button
             onClick={() => setFilter('open')}
             className={cn(
-              'px-3 py-1 rounded-md text-sm font-medium transition-colors',
+              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
               filter === 'open'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             )}
           >
@@ -219,9 +278,9 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
           <button
             onClick={() => setFilter('closed')}
             className={cn(
-              'px-3 py-1 rounded-md text-sm font-medium transition-colors',
+              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
               filter === 'closed'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             )}
           >
@@ -230,8 +289,8 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
         </div>
       </div>
 
-      {/* Issues List */}
-      <div className="space-y-3">
+      {/* Issues List - Scrollable Container */}
+      <div className="flex-1 overflow-y-auto space-y-3">
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-flex items-center text-gray-500 dark:text-gray-400">
@@ -251,7 +310,7 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
           </div>
         ) : filteredIssues.length === 0 ? (
           <div className="text-center py-12">
-            <GitIssueOpened className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+            <CircleDot className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
               No issues found
             </h3>
@@ -265,32 +324,34 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
           filteredIssues.map((issue) => (
             <div
               key={issue.id}
-              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
+              className="bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-3 sm:p-4 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start space-x-3">
+              <div className="flex items-start space-x-2 sm:space-x-3">
                 <div className="flex-shrink-0 mt-0.5">
                   {getIssueIcon(issue)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <a
-                        href={issue.html_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 flex items-center group"
-                      >
-                        <span className="truncate">{issue.title}</span>
-                        <ExternalLink className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </a>
-                      <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                        <span>#{issue.number}</span>
-                        <span className="flex items-center">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {formatDistanceToNow(new Date(issue.created_at))} ago
-                        </span>
-                        <span>by {issue.user.login}</span>
-                      </div>
+                  <div className="space-y-1">
+                    <a
+                      href={issue.html_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 inline-flex items-center group"
+                    >
+                      <span className="line-clamp-2 break-words">
+                        {issue.title}
+                      </span>
+                      <ExternalLink className="h-3 w-3 ml-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      <span>#{issue.number}</span>
+                      <span className="flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formatDistanceToNow(new Date(issue.created_at))} ago
+                      </span>
+                      <span className="hidden sm:inline">
+                        by {issue.user.login}
+                      </span>
                     </div>
                   </div>
 
@@ -314,9 +375,9 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
                     </div>
                   )}
 
-                  {/* Body Preview */}
+                  {/* Body Preview - Hidden on mobile */}
                   {issue.body && (
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                    <p className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 line-clamp-2 hidden sm:block">
                       {issue.body}
                     </p>
                   )}
