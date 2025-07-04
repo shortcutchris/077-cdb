@@ -89,6 +89,10 @@ The system follows this architecture:
 2. **Tailwind**: Use v3, not v4 (PostCSS compatibility)
 3. **Repository**: Currently hardcoded in `VoiceRecorder.tsx:116`
 4. **Storage**: No automatic cleanup implemented yet
+5. **Admin Pages Responsive**:
+   - Removed `min-width: 600px` from admin.css media query
+   - Added `overflow-hidden` to AdminLayout main container
+   - Use card layouts on mobile instead of tables
 
 ### API Keys (in .env)
 

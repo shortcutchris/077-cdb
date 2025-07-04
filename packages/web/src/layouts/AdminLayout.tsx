@@ -122,7 +122,7 @@ export function AdminLayout() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow lg:hidden">
           <div className="flex h-16 items-center px-4">
@@ -139,8 +139,10 @@ export function AdminLayout() {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="max-w-full">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

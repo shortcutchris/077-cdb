@@ -11,7 +11,6 @@ import { AdminLayout } from '@/layouts/AdminLayout'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { SignupPage } from '@/pages/SignupPage'
-import { ColorShowcase } from '@/pages/ColorShowcase'
 
 // Admin Pages
 import { AdminDashboard } from '@/pages/admin/Dashboard'
@@ -37,7 +36,6 @@ function App() {
       {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      <Route path="/colors" element={<ColorShowcase />} />
 
       {/* Protected routes */}
       <Route

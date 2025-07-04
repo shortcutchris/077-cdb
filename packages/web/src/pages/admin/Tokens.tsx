@@ -99,9 +99,9 @@ export function AdminTokens() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6 max-w-full overflow-hidden">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Access Tokens
@@ -112,7 +112,7 @@ export function AdminTokens() {
         </div>
         <button
           onClick={() => setShowAddToken(true)}
-          className="flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 whitespace-nowrap"
         >
           <Plus className="h-4 w-4" />
           <span>Add Token</span>
@@ -121,25 +121,27 @@ export function AdminTokens() {
 
       {/* Add Token Form */}
       {showAddToken && (
-        <div className="mb-6 rounded-lg bg-white dark:bg-gray-800 p-6 shadow">
+        <div className="rounded-lg bg-white dark:bg-gray-800 p-6 shadow overflow-hidden">
           <h2 className="mb-4 text-lg font-semibold dark:text-white">
             Add New Token
           </h2>
 
           <div className="mb-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 text-amber-400 dark:text-amber-300" />
-              <div className="ml-3">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-400 dark:text-amber-300 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
                 <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
                   Required GitHub Token Scopes
                 </h3>
                 <div className="mt-2 text-sm text-amber-700 dark:text-amber-300">
                   <ul className="list-disc list-inside space-y-1">
                     <li>
-                      <code>repo</code> - Full control of private repositories
+                      <code className="break-all">repo</code> - Full control of
+                      private repositories
                     </li>
                     <li>
-                      <code>read:org</code> - Read organization membership
+                      <code className="break-all">read:org</code> - Read
+                      organization membership
                     </li>
                   </ul>
                   <a
@@ -247,17 +249,17 @@ export function AdminTokens() {
                 .map((token) => (
                   <div
                     key={token.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   >
-                    <div className="flex items-center space-x-4">
-                      <div className="rounded-full bg-gray-100 dark:bg-gray-700 p-2">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="rounded-full bg-gray-100 dark:bg-gray-700 p-2 flex-shrink-0">
                         <Key className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
                           {token.token_name}
                         </h3>
-                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
                           {token.github_username && (
                             <span>@{token.github_username}</span>
                           )}
@@ -270,7 +272,7 @@ export function AdminTokens() {
                             ago
                           </span>
                           {token.last_used_at && (
-                            <span>
+                            <span className="hidden sm:inline">
                               Last used{' '}
                               {formatDistanceToNow(
                                 new Date(token.last_used_at)
@@ -284,7 +286,7 @@ export function AdminTokens() {
 
                     <button
                       onClick={() => handleDeleteToken(token.id)}
-                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex-shrink-0"
                     >
                       <Trash2 className="h-5 w-5" />
                     </button>
