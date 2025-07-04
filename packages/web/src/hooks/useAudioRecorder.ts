@@ -8,6 +8,7 @@ interface UseAudioRecorderReturn {
   stopRecording: () => void
   pauseRecording: () => void
   resumeRecording: () => void
+  resetRecording: () => void
   audioBlob: Blob | null
   audioUrl: string | null
   recordingTime: number
@@ -135,6 +136,19 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     }
   }, [recordingState, startTimer])
 
+  const resetRecording = useCallback(() => {
+    // Clean up the current recording
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl)
+    }
+    setAudioBlob(null)
+    setAudioUrl(null)
+    setRecordingTime(0)
+    setRecordingState('idle')
+    setError(null)
+    chunksRef.current = []
+  }, [audioUrl])
+
   // Cleanup on unmount
   useCallback(() => {
     return () => {
@@ -151,6 +165,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     stopRecording,
     pauseRecording,
     resumeRecording,
+    resetRecording,
     audioBlob,
     audioUrl,
     recordingTime,

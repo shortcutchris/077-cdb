@@ -45,6 +45,7 @@ export function VoiceRecorder({
     stopRecording,
     pauseRecording,
     resumeRecording,
+    resetRecording,
     audioBlob,
     audioUrl,
     recordingTime,
@@ -65,6 +66,8 @@ export function VoiceRecorder({
   const [selectedRepository, setSelectedRepository] = useState<string>(
     initialRepository || ''
   )
+  const [hasProcessedCurrentRecording, setHasProcessedCurrentRecording] =
+    useState(false)
 
   // Update selected repository when initialRepository changes
   useEffect(() => {
@@ -84,6 +87,7 @@ export function VoiceRecorder({
     setTranscription('')
     setGeneratedIssue(null)
     setStorageUrl(null)
+    setHasProcessedCurrentRecording(false)
     await startRecording()
   }
 
@@ -180,10 +184,22 @@ export function VoiceRecorder({
 
   // Auto-process when recording stops
   useEffect(() => {
-    if (recordingState === 'stopped' && audioBlob) {
+    if (
+      recordingState === 'stopped' &&
+      audioBlob &&
+      processingState === 'idle' &&
+      !hasProcessedCurrentRecording
+    ) {
+      setHasProcessedCurrentRecording(true)
       processRecording()
     }
-  }, [recordingState, audioBlob, processRecording])
+  }, [
+    recordingState,
+    audioBlob,
+    processingState,
+    hasProcessedCurrentRecording,
+    processRecording,
+  ])
 
   const getProcessingMessage = () => {
     switch (processingState) {
@@ -249,6 +265,9 @@ export function VoiceRecorder({
             setGeneratedIssue(null)
             setProcessingState('idle')
             setStorageUrl(null)
+            setHasProcessedCurrentRecording(false)
+            // Clear the audio to prevent re-processing
+            resetRecording()
           } catch (err) {
             alert(
               `Error creating issue: ${err instanceof Error ? err.message : 'Unknown error'}`
@@ -259,6 +278,9 @@ export function VoiceRecorder({
           setGeneratedIssue(null)
           setProcessingState('idle')
           setStorageUrl(null)
+          setHasProcessedCurrentRecording(false)
+          // Clear the audio to prevent re-processing
+          resetRecording()
         }}
       />
     )
