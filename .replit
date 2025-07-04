@@ -1,46 +1,29 @@
-# Replit Configuration for SpecifAI
+# Replit Configuration for SpecifAI Monorepo
 
-# Hidden files that should be ignored
-hidden = [".git", "node_modules", ".env", ".env.local"]
+hidden = [".git", "node_modules", ".env", ".env.local", ".cache", "dist", ".vite", "pnpm-lock.yaml"]
 
-# Main entry point
-entrypoint = "packages/web/index.html"
+# Direkt in packages/web arbeiten
+run = """
+  cd packages/web
+  npm install
+  npm run dev -- --host 0.0.0.0 --port 3000
+"""
 
-# Configure the run command
 [nix]
 channel = "stable-24_11"
 
-# Install dependencies and run the development server
-run = "npm install && npm run build && npm run preview"
-
-# Build command for production
-onBoot = "npm install"
-
-# Language configuration
-[languages.javascript]
-pattern = "**/*.{js,jsx,ts,tsx}"
-
-[languages.html]
-pattern = "**/*.html"
-
-[languages.css]
-pattern = "**/*.css"
-
-# Deployment configuration
-[deployment]
-build = ["sh", "-c", "npm install && npm run build"]
-run = ["sh", "-c", "cd packages/web && npm run preview --host 0.0.0.0 --port 3000"]
-
-# Environment variables (these need to be set in Replit secrets)
 [env]
-NODE_ENV = "production"
+NODE_ENV = "development"
+SKIP_HUSKY = "true"
 
-# Port configuration
 [[ports]]
 localPort = 3000
 externalPort = 80
 
-# Configure Vite preview server to work with Replit
+[[ports]]
+localPort = 5174
+externalPort = 3000
+
 [packager]
 language = "nodejs-npm"
 
@@ -48,6 +31,3 @@ language = "nodejs-npm"
 packageSearch = true
 guessImports = true
 enabledForHosting = false
-
-# Audio is enabled by default in Replit, no configuration needed
-# The browser will ask for microphone permissions when needed
