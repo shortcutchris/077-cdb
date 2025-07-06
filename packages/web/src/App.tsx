@@ -55,7 +55,7 @@ function App() {
       >
         <Route index element={<HomePage />} />
         <Route
-          path="issue/:repository/:issueNumber"
+          path="issue/:owner/:repo/:issueNumber"
           element={<IssueDetailPage />}
         />
       </Route>

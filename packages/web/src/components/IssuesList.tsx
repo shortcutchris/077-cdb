@@ -414,7 +414,7 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
                 <div className="flex-1 min-w-0">
                   <div className="space-y-1">
                     <Link
-                      to={`/issue/${encodeURIComponent(repository)}/${issue.number}`}
+                      to={`/issue/${repository.split('/')[0]}/${repository.split('/')[1]}/${issue.number}`}
                       className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 block"
                     >
                       <span className="line-clamp-2 break-words">
