@@ -77,6 +77,19 @@ export function IssueDetailPage() {
   const [loadingComments, setLoadingComments] = useState(false)
   const [creatingComment, setCreatingComment] = useState(false)
   const [commentSuccess, setCommentSuccess] = useState(false)
+  const [currentUser, setCurrentUser] = useState<{
+    id: string
+    email?: string
+    user_metadata?: {
+      user_name?: string
+      preferred_username?: string
+      avatar_url?: string
+    }
+    profile?: {
+      github_username?: string
+      avatar_url?: string
+    }
+  } | null>(null)
 
   useEffect(() => {
     if (repository && issueNumber) {
@@ -98,6 +111,23 @@ export function IssueDetailPage() {
       } = await supabase.auth.getUser()
       if (!user) {
         throw new Error('Not authenticated')
+      }
+
+      // Store current user for later use
+      setCurrentUser(user)
+
+      // Get user profile for GitHub username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('github_username, avatar_url')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (profile) {
+        setCurrentUser((prev) => ({
+          ...prev,
+          profile,
+        }))
       }
 
       // Check if user is admin
@@ -200,7 +230,7 @@ export function IssueDetailPage() {
     setLoadingComments(true)
     try {
       const commentsResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+        `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments?t=${Date.now()}`,
         { headers }
       )
 
@@ -246,8 +276,42 @@ export function IssueDetailPage() {
         setCommentSuccess(true)
         setTimeout(() => setCommentSuccess(false), 3000)
 
-        // Refresh the entire page to show the new comment
-        await loadIssueDetails()
+        // Get current user's GitHub info from profile or use fallback
+        const userLogin =
+          currentUser?.profile?.github_username ||
+          currentUser?.user_metadata?.user_name ||
+          currentUser?.user_metadata?.preferred_username ||
+          currentUser?.email?.split('@')[0] ||
+          'Unknown'
+        const userAvatar =
+          currentUser?.profile?.avatar_url ||
+          currentUser?.user_metadata?.avatar_url ||
+          `https://ui-avatars.com/api/?name=${userLogin}`
+
+        // Optimistically add the new comment to the list
+        const newComment: IssueComment = {
+          id: data.data.id,
+          body: data.data.body,
+          created_at: data.data.created_at,
+          updated_at: data.data.created_at,
+          user: {
+            login: userLogin,
+            avatar_url: userAvatar,
+          },
+        }
+
+        // Add to existing comments
+        setComments((prev) => [...prev, newComment])
+
+        // Update issue comment count
+        setIssue((prev) =>
+          prev ? { ...prev, comments: prev.comments + 1 } : prev
+        )
+
+        // Optional: Reload in background after a delay to sync with GitHub
+        setTimeout(() => {
+          loadIssueDetails()
+        }, 2000)
       } else {
         throw new Error(data?.error || 'Failed to create comment')
       }
