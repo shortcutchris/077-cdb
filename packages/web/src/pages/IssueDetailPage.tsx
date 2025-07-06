@@ -386,9 +386,9 @@ export function IssueDetailPage() {
                       key={label.id}
                       className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
                       style={{
-                        backgroundColor: `#${label.color}20`,
+                        backgroundColor: `#${label.color}30`,
                         color: `#${label.color}`,
-                        border: `1px solid #${label.color}40`,
+                        border: `1px solid #${label.color}60`,
                       }}
                     >
                       <Tag className="h-3 w-3 mr-1" />
