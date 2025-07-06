@@ -283,10 +283,9 @@ export function VoiceRecorder({
               setTimeout(() => {
                 setIssueCreationSuccess(false)
                 setCreatedIssueData(null)
+                // Notify parent component that an issue was created (when modal closes)
+                onIssueCreated?.()
               }, 5000)
-
-              // Notify parent component that an issue was created
-              onIssueCreated?.()
 
               // Reset state
               setGeneratedIssue(null)
@@ -511,6 +510,8 @@ export function VoiceRecorder({
                 onClick={() => {
                   setIssueCreationSuccess(false)
                   setCreatedIssueData(null)
+                  // Notify parent component that an issue was created (when modal closes)
+                  onIssueCreated?.()
                 }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
               >
@@ -545,6 +546,8 @@ export function VoiceRecorder({
                   onClick={() => {
                     setIssueCreationSuccess(false)
                     setCreatedIssueData(null)
+                    // Notify parent component that an issue was created (when modal closes)
+                    onIssueCreated?.()
                   }}
                   className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                 >
