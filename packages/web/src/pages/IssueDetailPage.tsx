@@ -312,11 +312,10 @@ export function IssueDetailPage() {
           prev ? { ...prev, comments: prev.comments + 1 } : prev
         )
 
-        // Reload the page after a short delay to ensure GitHub has synced
-        // This is a simple solution that guarantees fresh data
-        setTimeout(() => {
-          window.location.reload()
-        }, 1500)
+        // Page reload not needed - optimistic updates work well
+        // setTimeout(() => {
+        //   window.location.reload()
+        // }, 1500)
       } else {
         throw new Error(data?.error || 'Failed to create comment')
       }
