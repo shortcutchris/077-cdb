@@ -126,6 +126,7 @@ export function CommentForm({
       {/* Tab Navigation */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         <button
+          type="button"
           onClick={() => setActiveTab('text')}
           className={cn(
             'flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center space-x-2',
@@ -140,6 +141,7 @@ export function CommentForm({
           <span>Text</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('voice')}
           className={cn(
             'flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center space-x-2',
@@ -191,6 +193,7 @@ export function CommentForm({
             {/* Text Controls */}
             <div className="flex items-center justify-between">
               <button
+                type="button"
                 onClick={() => setShowPreview(!showPreview)}
                 className="flex items-center space-x-2 px-3 py-1 text-sm text-gray-600 dark:text-gray-400 
                          hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
@@ -201,6 +204,7 @@ export function CommentForm({
               </button>
 
               <button
+                type="button"
                 onClick={handleTextSubmit}
                 disabled={disabled || isSubmitting || !textContent.trim()}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg 
