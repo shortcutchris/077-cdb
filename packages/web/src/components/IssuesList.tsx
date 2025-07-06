@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Filter,
   RefreshCw,
-  ExternalLink,
   Clock,
   Tag,
   AlertCircle,
@@ -125,7 +124,6 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
 
       if (tokenError || !tokenData) {
         // Try public API as fallback
-        console.log('No token available, trying public API')
         const [owner, repo] = repository.split('/')
 
         const response = await fetch(
@@ -417,12 +415,11 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
                   <div className="space-y-1">
                     <Link
                       to={`/issue/${repository}/${issue.number}`}
-                      className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 inline-flex items-center group"
+                      className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 block"
                     >
                       <span className="line-clamp-2 break-words">
                         {issue.title}
                       </span>
-                      <ExternalLink className="h-3 w-3 ml-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </Link>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                       <span>#{issue.number}</span>
