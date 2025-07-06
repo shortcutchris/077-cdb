@@ -39,7 +39,7 @@ serve(async (req) => {
 
     // Extract the JWT token
     const jwt = authorization.replace('Bearer ', '')
-    
+
     // Create Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
       global: {
@@ -50,17 +50,28 @@ serve(async (req) => {
     })
 
     // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt)
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(jwt)
     if (userError || !user) {
       throw new Error('Invalid authentication token')
     }
 
     // Parse request body
-    const { repository, issueNumber, body, audioUrl, transcription }: CommentRequest = await req.json()
+    const {
+      repository,
+      issueNumber,
+      body,
+      audioUrl,
+      transcription,
+    }: CommentRequest = await req.json()
 
     // Validate required fields
     if (!repository || !issueNumber || !body) {
-      throw new Error('Missing required fields: repository, issueNumber, and body')
+      throw new Error(
+        'Missing required fields: repository, issueNumber, and body'
+      )
     }
 
     // Check if user is admin
@@ -82,7 +93,9 @@ serve(async (req) => {
         .maybeSingle()
 
       if (!permission) {
-        throw new Error(`No permission to create comments in repository: ${repository}`)
+        throw new Error(
+          `No permission to create comments in repository: ${repository}`
+        )
       }
     }
 
@@ -105,8 +118,8 @@ serve(async (req) => {
       {
         method: 'POST',
         headers: {
-          'Authorization': `token ${tokenData.encrypted_token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `token ${tokenData.encrypted_token}`,
+          Accept: 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -123,37 +136,33 @@ serve(async (req) => {
     const githubComment: GitHubComment = await githubResponse.json()
 
     // Log the comment creation in audit log
-    await supabase
-      .from('admin_audit_log')
-      .insert({
-        user_id: user.id,
-        action: 'create_comment',
-        resource_type: 'github_comment',
-        resource_id: githubComment.id.toString(),
-        details: {
-          repository,
-          issueNumber,
-          commentId: githubComment.id,
-          hasAudio: !!audioUrl,
-          hasTranscription: !!transcription,
-        },
-      })
+    await supabase.from('admin_audit_log').insert({
+      admin_user_id: user.id,
+      action: 'create_comment',
+      resource_type: 'github_comment',
+      resource_id: githubComment.id.toString(),
+      details: {
+        repository,
+        issueNumber,
+        commentId: githubComment.id,
+        hasAudio: !!audioUrl,
+        hasTranscription: !!transcription,
+      },
+    })
 
     // Store comment history if audio was provided
     if (audioUrl || transcription) {
-      await supabase
-        .from('comment_history')
-        .insert({
-          user_id: user.id,
-          repository_full_name: repository,
-          issue_number: issueNumber,
-          comment_id: githubComment.id,
-          github_comment_url: githubComment.html_url,
-          audio_url: audioUrl || null,
-          transcription: transcription || null,
-          comment_body: body,
-          created_at: new Date().toISOString(),
-        })
+      await supabase.from('comment_history').insert({
+        user_id: user.id,
+        repository_full_name: repository,
+        issue_number: issueNumber,
+        comment_id: githubComment.id,
+        github_comment_url: githubComment.html_url,
+        audio_url: audioUrl || null,
+        transcription: transcription || null,
+        comment_body: body,
+        created_at: new Date().toISOString(),
+      })
     }
 
     return new Response(
@@ -173,14 +182,14 @@ serve(async (req) => {
         },
       }
     )
-
   } catch (error) {
     console.error('Error creating comment:', error)
-    
+
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error:
+          error instanceof Error ? error.message : 'Unknown error occurred',
       }),
       {
         status: 500,

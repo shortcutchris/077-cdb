@@ -75,6 +75,7 @@ export function IssueDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [loadingComments, setLoadingComments] = useState(false)
   const [creatingComment, setCreatingComment] = useState(false)
+  const [commentSuccess, setCommentSuccess] = useState(false)
 
   useEffect(() => {
     if (repository && issueNumber) {
@@ -226,24 +227,28 @@ export function IssueDetailPage() {
 
     setCreatingComment(true)
     try {
-      const { data, error } = await supabase.functions.invoke('github-create-comment', {
-        body: {
-          repository,
-          issueNumber: parseInt(issueNumber),
-          body: comment.body,
-          audioUrl: comment.audioUrl,
-          transcription: comment.transcription,
-        },
-      })
+      const { data, error } = await supabase.functions.invoke(
+        'github-create-comment',
+        {
+          body: {
+            repository,
+            issueNumber: parseInt(issueNumber),
+            body: comment.body,
+            audioUrl: comment.audioUrl,
+            transcription: comment.transcription,
+          },
+        }
+      )
 
       if (error) throw error
 
       if (data?.success) {
         // Refresh comments to show the new comment
         await loadIssueDetails()
-        
+
         // Show success message
-        console.log('Comment created successfully:', data.data)
+        setCommentSuccess(true)
+        setTimeout(() => setCommentSuccess(false), 3000)
       } else {
         throw new Error(data?.error || 'Failed to create comment')
       }
@@ -537,6 +542,17 @@ export function IssueDetailPage() {
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Add a comment
                   </h3>
+
+                  {/* Success Message */}
+                  {commentSuccess && (
+                    <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg text-green-700 dark:text-green-300 flex items-center space-x-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        Comment posted successfully!
+                      </span>
+                    </div>
+                  )}
+
                   <CommentForm
                     onSubmit={handleCreateComment}
                     disabled={creatingComment}

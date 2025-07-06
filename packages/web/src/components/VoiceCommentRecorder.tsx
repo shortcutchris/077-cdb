@@ -12,12 +12,14 @@ interface VoiceCommentRecorderProps {
   onSubmit: (audioUrl: string, transcription: string) => Promise<void>
   disabled?: boolean
   maxDuration?: number // in seconds, default 60
+  onTranscriptionReady?: (transcription: string) => void
 }
 
-export function VoiceCommentRecorder({ 
-  onSubmit, 
-  disabled = false, 
-  maxDuration = 60 
+export function VoiceCommentRecorder({
+  onSubmit,
+  disabled = false,
+  maxDuration = 60,
+  onTranscriptionReady,
 }: VoiceCommentRecorderProps) {
   const { user } = useAuth()
   const {
@@ -33,11 +35,15 @@ export function VoiceCommentRecorder({
     error: recordingError,
   } = useAudioRecorder()
 
-  const [processingState, setProcessingState] = useState<'idle' | 'uploading' | 'transcribing' | 'error'>('idle')
+  const [processingState, setProcessingState] = useState<
+    'idle' | 'uploading' | 'transcribing' | 'error'
+  >('idle')
   const [transcription, setTranscription] = useState('')
   const [storageUrl, setStorageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [hasProcessed, setHasProcessed] = useState(false)
+  const [editedTranscription, setEditedTranscription] = useState('')
+  const [isEditingTranscription, setIsEditingTranscription] = useState(false)
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -54,7 +60,8 @@ export function VoiceCommentRecorder({
   }
 
   const processRecording = useCallback(async () => {
-    if (!audioBlob || !user || processingState !== 'idle' || hasProcessed) return
+    if (!audioBlob || !user || processingState !== 'idle' || hasProcessed)
+      return
 
     setProcessingState('uploading')
     setError(null)
@@ -63,7 +70,7 @@ export function VoiceCommentRecorder({
     try {
       // Upload to Supabase Storage
       const fileName = `comments/${user.id}/${Date.now()}_comment.webm`
-      
+
       const { error: uploadError } = await supabase.storage
         .from('voice-recordings')
         .upload(fileName, audioBlob, {
@@ -74,9 +81,9 @@ export function VoiceCommentRecorder({
       if (uploadError) throw uploadError
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('voice-recordings')
-        .getPublicUrl(fileName)
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('voice-recordings').getPublicUrl(fileName)
 
       setStorageUrl(publicUrl)
 
@@ -85,10 +92,17 @@ export function VoiceCommentRecorder({
       const transcriptionText = await transcribeAudio(audioBlob)
       setTranscription(transcriptionText)
 
+      // Notify parent component if callback provided
+      if (onTranscriptionReady) {
+        onTranscriptionReady(transcriptionText)
+      }
+
       setProcessingState('idle')
     } catch (err) {
       console.error('Error processing recording:', err)
-      setError(err instanceof Error ? err.message : 'Failed to process recording')
+      setError(
+        err instanceof Error ? err.message : 'Failed to process recording'
+      )
       setProcessingState('error')
     }
   }, [audioBlob, user, processingState, hasProcessed])
@@ -97,12 +111,18 @@ export function VoiceCommentRecorder({
     if (!storageUrl || !transcription) return
 
     try {
-      await onSubmit(storageUrl, transcription)
+      // Use edited transcription if available, otherwise original
+      const finalTranscription = isEditingTranscription
+        ? editedTranscription
+        : transcription
+      await onSubmit(storageUrl, finalTranscription)
       // Reset after successful submission
       resetRecording()
       setTranscription('')
+      setEditedTranscription('')
       setStorageUrl(null)
       setHasProcessed(false)
+      setIsEditingTranscription(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit comment')
     }
@@ -204,7 +224,10 @@ export function VoiceCommentRecorder({
         {recordingState === 'idle' && !audioBlob && (
           <div className="text-center text-gray-600 dark:text-gray-400 space-y-1">
             <p>Click to record a voice comment</p>
-            <p className="text-sm">Maximum: {Math.floor(maxDuration / 60)}:{(maxDuration % 60).toString().padStart(2, '0')}</p>
+            <p className="text-sm">
+              Maximum: {Math.floor(maxDuration / 60)}:
+              {(maxDuration % 60).toString().padStart(2, '0')}
+            </p>
           </div>
         )}
       </div>
@@ -242,7 +265,7 @@ export function VoiceCommentRecorder({
             >
               Discard
             </button>
-            
+
             {!transcription ? (
               <button
                 onClick={processRecording}
@@ -267,15 +290,56 @@ export function VoiceCommentRecorder({
       {/* Transcription Display */}
       {transcription && (
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <Mic className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-              Transcription
-            </span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <Mic className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Transcription
+              </span>
+            </div>
+            {!isEditingTranscription && (
+              <button
+                onClick={() => {
+                  setIsEditingTranscription(true)
+                  setEditedTranscription(transcription)
+                }}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Edit
+              </button>
+            )}
           </div>
-          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-            {transcription}
-          </p>
+          {isEditingTranscription ? (
+            <div className="space-y-2">
+              <textarea
+                value={editedTranscription}
+                onChange={(e) => setEditedTranscription(e.target.value)}
+                className="w-full p-2 text-sm border border-blue-200 dark:border-blue-700 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 resize-none"
+                rows={3}
+              />
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => {
+                    setIsEditingTranscription(false)
+                    setEditedTranscription('')
+                  }}
+                  className="text-sm px-3 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setIsEditingTranscription(false)}
+                  className="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+              {editedTranscription || transcription}
+            </p>
+          )}
         </div>
       )}
 
