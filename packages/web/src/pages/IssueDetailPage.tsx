@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
-  ExternalLink,
   GitBranch,
   CircleDot,
   CheckCircle2,
@@ -11,6 +10,7 @@ import {
   Calendar,
   AlertCircle,
   Volume2,
+  Github,
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
@@ -298,15 +298,18 @@ export function IssueDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-fadeIn">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/')}
+                onClick={() =>
+                  navigate('/', { state: { selectedRepository: repository } })
+                }
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Back to Home"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -323,10 +326,10 @@ export function IssueDetailPage() {
               href={issue.html_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              title="Open in GitHub"
             >
-              <span>Open in GitHub</span>
-              <ExternalLink className="h-4 w-4" />
+              <Github className="h-5 w-5" />
             </a>
           </div>
         </div>
