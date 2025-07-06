@@ -39,10 +39,10 @@ interface GitHubIssue {
 
 interface IssuesListProps {
   repository: string | null
-  onIssueCreated?: () => void
+  reloadTrigger?: number // New prop to trigger reload
 }
 
-export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
+export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
   const { user } = useAuth()
   const [issues, setIssues] = useState<GitHubIssue[]>([])
   const [filteredIssues, setFilteredIssues] = useState<GitHubIssue[]>([])
@@ -66,16 +66,16 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [issues, filter, myIssueNumbers])
 
+  // React to reload trigger changes
   useEffect(() => {
-    if (onIssueCreated) {
+    if (reloadTrigger && reloadTrigger > 0) {
       // Add a delay to ensure GitHub API has processed the new issue
       setTimeout(() => {
-        // Reload issues when a new issue is created
         loadIssues()
       }, 1500) // 1.5 second delay to give GitHub time to process
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onIssueCreated])
+  }, [reloadTrigger])
 
   const loadIssues = async () => {
     if (!repository) return
