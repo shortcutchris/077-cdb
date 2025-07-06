@@ -59,10 +59,13 @@ interface IssueHistoryData {
 }
 
 export function IssueDetailPage() {
-  const { repository, issueNumber } = useParams<{
+  const { repository: encodedRepository, issueNumber } = useParams<{
     repository: string
     issueNumber: string
   }>()
+  const repository = encodedRepository
+    ? decodeURIComponent(encodedRepository)
+    : undefined
   const navigate = useNavigate()
 
   const [issue, setIssue] = useState<GitHubIssue | null>(null)
