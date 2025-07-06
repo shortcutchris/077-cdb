@@ -7,6 +7,9 @@ import {
   Loader2,
   GitBranch,
   AlertCircle,
+  CheckCircle2,
+  ExternalLink,
+  X,
 } from 'lucide-react'
 import { useAudioRecorder } from '@/hooks/useAudioRecorder'
 import { useUserRepositories } from '@/hooks/useUserRepositories'
@@ -71,6 +74,15 @@ export function VoiceRecorder({
   )
   const [hasProcessedCurrentRecording, setHasProcessedCurrentRecording] =
     useState(false)
+  
+  // New state for success modal
+  const [issueCreationSuccess, setIssueCreationSuccess] = useState(false)
+  const [createdIssueData, setCreatedIssueData] = useState<{
+    title: string
+    url: string
+    number: number
+    repository: string
+  } | null>(null)
 
   // Update selected repository when initialRepository changes
   useEffect(() => {
@@ -256,12 +268,22 @@ export function VoiceRecorder({
 
             if (error) throw error
 
-            // Show success and redirect to issue
+            // Show success modal
             if (data?.success && data?.data?.html_url) {
-              alert(
-                `Issue created successfully! View it at: ${data.data.html_url}`
-              )
-              window.open(data.data.html_url, '_blank')
+              // Set success data for modal
+              setCreatedIssueData({
+                title: generatedIssue.title,
+                url: data.data.html_url,
+                number: data.data.number,
+                repository: selectedRepository,
+              })
+              setIssueCreationSuccess(true)
+              
+              // Auto-hide modal after 5 seconds
+              setTimeout(() => {
+                setIssueCreationSuccess(false)
+                setCreatedIssueData(null)
+              }, 5000)
 
               // Notify parent component that an issue was created
               onIssueCreated?.()
@@ -471,6 +493,66 @@ export function VoiceRecorder({
               <p className="text-sm">Maximum recording time: 2 minutes</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {issueCreationSuccess && createdIssueData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 animate-fadeIn">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Issue Created Successfully!
+                </h2>
+              </div>
+              <button
+                onClick={() => {
+                  setIssueCreationSuccess(false)
+                  setCreatedIssueData(null)
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  {createdIssueData.title}
+                </h3>
+                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                  <GitBranch className="h-4 w-4" />
+                  <span>{createdIssueData.repository}</span>
+                  <span className="text-gray-400">•</span>
+                  <span>#{createdIssueData.number}</span>
+                </div>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    window.open(createdIssueData.url, '_blank')
+                  }}
+                  className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>View Issue</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIssueCreationSuccess(false)
+                    setCreatedIssueData(null)
+                  }}
+                  className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
