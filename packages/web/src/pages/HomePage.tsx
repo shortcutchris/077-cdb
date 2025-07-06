@@ -17,14 +17,10 @@ export function HomePage() {
 
   // Set repository from state or default to first repository
   useEffect(() => {
-    console.log('HomePage - repositoryFromState:', repositoryFromState)
-    console.log('HomePage - repositories:', repositories.length)
-
     if (
       repositoryFromState &&
       repositories.some((r) => r.repository_full_name === repositoryFromState)
     ) {
-      console.log('Setting repository from state:', repositoryFromState)
       setSelectedRepository(repositoryFromState)
       // Clear the state after a short delay to ensure it's used
       setTimeout(() => {
@@ -35,10 +31,6 @@ export function HomePage() {
       repositories.length > 0 &&
       !repositoryFromState
     ) {
-      console.log(
-        'Setting default repository:',
-        repositories[0].repository_full_name
-      )
       setSelectedRepository(repositories[0].repository_full_name)
     }
   }, [repositories, repositoryFromState])

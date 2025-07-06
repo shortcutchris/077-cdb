@@ -305,14 +305,13 @@ export function IssueDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => {
-                  console.log('Navigating back with repository:', repository)
+                onClick={() =>
                   navigate('/', { state: { selectedRepository: repository } })
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                }
+                className="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Back to Home"
               >
-                <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                <ArrowLeft className="h-5 w-5" />
               </button>
               <div className="flex items-center space-x-2">
                 <GitBranch className="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -329,10 +328,10 @@ export function IssueDetailPage() {
               href={issue.html_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="p-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
               title="Open in GitHub"
             >
-              <Github className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              <Github className="h-5 w-5" />
             </a>
           </div>
         </div>
