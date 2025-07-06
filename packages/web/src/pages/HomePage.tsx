@@ -8,7 +8,6 @@ export function HomePage() {
   const location = useLocation()
   const { repositories } = useUserRepositories()
   const [selectedRepository, setSelectedRepository] = useState<string>('')
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   // Check if we have a repository from navigation state
   const repositoryFromState = location.state?.selectedRepository as
@@ -36,8 +35,8 @@ export function HomePage() {
   }, [repositories, repositoryFromState])
 
   const handleIssueCreated = () => {
-    // Trigger a refresh of the issues list
-    setRefreshTrigger((prev) => prev + 1)
+    // Issues list will refresh automatically with a delay
+    // This callback is passed to trigger the refresh in IssuesList
   }
 
   return (
@@ -57,7 +56,6 @@ export function HomePage() {
           <IssuesList
             repository={selectedRepository}
             onIssueCreated={handleIssueCreated}
-            key={refreshTrigger}
           />
         </div>
       </div>
