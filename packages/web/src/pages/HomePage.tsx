@@ -17,17 +17,31 @@ export function HomePage() {
 
   // Set repository from state or default to first repository
   useEffect(() => {
+    console.log('HomePage - repositoryFromState:', repositoryFromState)
+    console.log('HomePage - repositories:', repositories.length)
+
     if (
       repositoryFromState &&
       repositories.some((r) => r.repository_full_name === repositoryFromState)
     ) {
+      console.log('Setting repository from state:', repositoryFromState)
       setSelectedRepository(repositoryFromState)
-      // Clear the state to prevent it from persisting
-      window.history.replaceState({}, document.title)
-    } else if (!selectedRepository && repositories.length > 0) {
+      // Clear the state after a short delay to ensure it's used
+      setTimeout(() => {
+        window.history.replaceState({}, document.title)
+      }, 100)
+    } else if (
+      !selectedRepository &&
+      repositories.length > 0 &&
+      !repositoryFromState
+    ) {
+      console.log(
+        'Setting default repository:',
+        repositories[0].repository_full_name
+      )
       setSelectedRepository(repositories[0].repository_full_name)
     }
-  }, [repositories, selectedRepository, repositoryFromState])
+  }, [repositories, repositoryFromState])
 
   const handleIssueCreated = () => {
     // Trigger a refresh of the issues list

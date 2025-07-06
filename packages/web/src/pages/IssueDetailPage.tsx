@@ -305,21 +305,24 @@ export function IssueDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() =>
+                onClick={() => {
+                  console.log('Navigating back with repository:', repository)
                   navigate('/', { state: { selectedRepository: repository } })
-                }
+                }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Back to Home"
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               </button>
               <div className="flex items-center space-x-2">
-                <GitBranch className="h-5 w-5 text-gray-500" />
+                <GitBranch className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   {repository}
                 </span>
-                <span className="text-gray-400">/</span>
-                <span className="text-sm font-medium">#{issueNumber}</span>
+                <span className="text-gray-400 dark:text-gray-500">/</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  #{issueNumber}
+                </span>
               </div>
             </div>
             <a
@@ -329,7 +332,7 @@ export function IssueDetailPage() {
               className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
               title="Open in GitHub"
             >
-              <Github className="h-5 w-5" />
+              <Github className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </a>
           </div>
         </div>
