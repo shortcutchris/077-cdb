@@ -214,14 +214,20 @@ export function IssueDetailPage() {
       // Headers
       if (line.startsWith('## ')) {
         return (
-          <h2 key={index} className="text-lg font-semibold mt-4 mb-2">
+          <h2
+            key={index}
+            className="text-lg font-semibold mt-4 mb-2 text-gray-900 dark:text-white"
+          >
             {line.substring(3)}
           </h2>
         )
       }
       if (line.startsWith('# ')) {
         return (
-          <h1 key={index} className="text-xl font-bold mt-4 mb-2">
+          <h1
+            key={index}
+            className="text-xl font-bold mt-4 mb-2 text-gray-900 dark:text-white"
+          >
             {line.substring(2)}
           </h1>
         )
@@ -229,7 +235,10 @@ export function IssueDetailPage() {
       // Lists
       if (line.startsWith('- ')) {
         return (
-          <li key={index} className="ml-4 list-disc">
+          <li
+            key={index}
+            className="ml-4 list-disc text-gray-700 dark:text-gray-300"
+          >
             {line.substring(2)}
           </li>
         )
@@ -237,7 +246,7 @@ export function IssueDetailPage() {
       // Normal paragraph
       if (line.trim()) {
         return (
-          <p key={index} className="mb-2">
+          <p key={index} className="mb-2 text-gray-700 dark:text-gray-300">
             {line}
           </p>
         )
@@ -401,8 +410,8 @@ export function IssueDetailPage() {
 
             {/* Comments Section */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <MessageCircle className="h-5 w-5 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <MessageCircle className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
                 Comments ({issue.comments})
               </h2>
 
@@ -429,17 +438,17 @@ export function IssueDetailPage() {
                         />
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <span className="font-medium">
+                            <span className="font-medium text-gray-900 dark:text-white">
                               {comment.user.login}
                             </span>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
                               {formatDistanceToNow(
                                 new Date(comment.created_at)
                               )}{' '}
                               ago
                             </span>
                           </div>
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
                             {renderMarkdown(comment.body)}
                           </div>
                         </div>
@@ -455,7 +464,9 @@ export function IssueDetailPage() {
           <div className="space-y-6">
             {/* Issue Info */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold mb-4">Issue Information</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                Issue Information
+              </h3>
               <dl className="space-y-3">
                 <div>
                   <dt className="text-sm text-gray-500 dark:text-gray-400">
@@ -478,7 +489,7 @@ export function IssueDetailPage() {
                   <dt className="text-sm text-gray-500 dark:text-gray-400">
                     Created
                   </dt>
-                  <dd className="mt-1 text-sm">
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white">
                     {format(new Date(issue.created_at), 'PPP')}
                   </dd>
                 </div>
@@ -487,7 +498,7 @@ export function IssueDetailPage() {
                     <dt className="text-sm text-gray-500 dark:text-gray-400">
                       Updated
                     </dt>
-                    <dd className="mt-1 text-sm">
+                    <dd className="mt-1 text-sm text-gray-900 dark:text-white">
                       {format(new Date(issue.updated_at), 'PPP')}
                     </dd>
                   </div>
