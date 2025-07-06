@@ -159,21 +159,28 @@ export function IssueDetailPage() {
 
       // Load history data from Supabase
       try {
-        const { data: history, error: historyError } = await supabase
-          .from('issues_history')
-          .select('audio_url, transcription, created_by, created_at')
-          .eq('repository_full_name', repository)
-          .eq('issue_number', parseInt(issueNumber))
-          .maybeSingle()
+        // First check if the table exists and we have access
+        const issueNum = parseInt(issueNumber)
 
-        if (historyError) {
-          console.warn('Error loading issue history:', historyError)
-        } else if (history) {
-          setHistoryData(history)
+        if (!isNaN(issueNum)) {
+          const { data: history, error: historyError } = await supabase
+            .from('issues_history')
+            .select('audio_url, transcription, created_by, created_at')
+            .eq('repository_full_name', repository)
+            .eq('issue_number', issueNum)
+            .maybeSingle()
+
+          if (historyError) {
+            // Only log if it's not a "not found" error
+            if (!historyError.message?.includes('not found')) {
+              console.warn('Error loading issue history:', historyError.message)
+            }
+          } else if (history) {
+            setHistoryData(history)
+          }
         }
       } catch (historyErr) {
-        console.warn('Failed to load issue history:', historyErr)
-        // Don't fail the entire page load just because history is missing
+        // Silently ignore - history is optional
       }
     } catch (err) {
       console.error('Error loading issue:', err)
@@ -388,9 +395,7 @@ export function IssueDetailPage() {
 
               {/* Body */}
               {issue.body && (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  {renderMarkdown(issue.body)}
-                </div>
+                <div className="max-w-none">{renderMarkdown(issue.body)}</div>
               )}
 
               {/* Audio Player if available */}
@@ -455,7 +460,7 @@ export function IssueDetailPage() {
                               ago
                             </span>
                           </div>
-                          <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                          <div className="max-w-none">
                             {renderMarkdown(comment.body)}
                           </div>
                         </div>
