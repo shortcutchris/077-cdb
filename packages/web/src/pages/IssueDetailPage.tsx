@@ -158,15 +158,22 @@ export function IssueDetailPage() {
       }
 
       // Load history data from Supabase
-      const { data: history } = await supabase
-        .from('issues_history')
-        .select('audio_url, transcription, created_by, created_at')
-        .eq('repository_full_name', repository)
-        .eq('issue_number', parseInt(issueNumber))
-        .maybeSingle()
+      try {
+        const { data: history, error: historyError } = await supabase
+          .from('issues_history')
+          .select('audio_url, transcription, created_by, created_at')
+          .eq('repository_full_name', repository)
+          .eq('issue_number', parseInt(issueNumber))
+          .maybeSingle()
 
-      if (history) {
-        setHistoryData(history)
+        if (historyError) {
+          console.warn('Error loading issue history:', historyError)
+        } else if (history) {
+          setHistoryData(history)
+        }
+      } catch (historyErr) {
+        console.warn('Failed to load issue history:', historyErr)
+        // Don't fail the entire page load just because history is missing
       }
     } catch (err) {
       console.error('Error loading issue:', err)
