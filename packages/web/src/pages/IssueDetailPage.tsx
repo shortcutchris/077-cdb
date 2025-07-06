@@ -53,10 +53,11 @@ interface IssueComment {
 }
 
 interface IssueHistoryData {
-  audio_url: string | null
-  transcription: string | null
   created_by: string
   created_at: string
+  // Audio data might come from a different source for voice-created issues
+  audio_url?: string | null
+  transcription?: string | null
 }
 
 export function IssueDetailPage() {
@@ -155,10 +156,8 @@ export function IssueDetailPage() {
       const issueData: GitHubIssue = await issueResponse.json()
       setIssue(issueData)
 
-      // Load comments if there are any
-      if (issueData.comments > 0) {
-        loadComments(owner, repo, headers)
-      }
+      // Always load comments (even if counter shows 0, there might be new ones)
+      loadComments(owner, repo, headers)
 
       // Load history data from Supabase
       try {
@@ -168,7 +167,7 @@ export function IssueDetailPage() {
         if (!isNaN(issueNum)) {
           const { data: history, error: historyError } = await supabase
             .from('issues_history')
-            .select('audio_url, transcription, created_by, created_at')
+            .select('*')
             .eq('repository_full_name', repository)
             .eq('issue_number', issueNum)
             .maybeSingle()
@@ -243,12 +242,12 @@ export function IssueDetailPage() {
       if (error) throw error
 
       if (data?.success) {
-        // Refresh comments to show the new comment
-        await loadIssueDetails()
-
-        // Show success message
+        // Show success message immediately
         setCommentSuccess(true)
         setTimeout(() => setCommentSuccess(false), 3000)
+
+        // Refresh the entire page to show the new comment
+        await loadIssueDetails()
       } else {
         throw new Error(data?.error || 'Failed to create comment')
       }
@@ -464,8 +463,8 @@ export function IssueDetailPage() {
                 <div className="max-w-none">{renderMarkdown(issue.body)}</div>
               )}
 
-              {/* Audio Player if available */}
-              {historyData?.audio_url && (
+              {/* Audio Player if available (only for issues created via voice) */}
+              {historyData && historyData.audio_url && (
                 <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="flex items-center space-x-2 mb-2">
                     <Volume2 className="h-4 w-4 text-gray-500" />
