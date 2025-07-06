@@ -164,6 +164,7 @@ export function VoiceCommentRecorder({
         <div className="flex items-center space-x-4">
           {recordingState === 'idle' && !audioBlob ? (
             <button
+              type="button"
               onClick={handleStartRecording}
               disabled={disabled}
               className={cn(
@@ -178,6 +179,7 @@ export function VoiceCommentRecorder({
           ) : recordingState === 'recording' ? (
             <div className="flex items-center space-x-4">
               <button
+                type="button"
                 onClick={pauseRecording}
                 className="flex items-center justify-center w-12 h-12 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors"
               >
@@ -189,6 +191,7 @@ export function VoiceCommentRecorder({
                 </div>
               </div>
               <button
+                type="button"
                 onClick={stopRecording}
                 className="flex items-center justify-center w-12 h-12 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors"
               >
@@ -198,12 +201,14 @@ export function VoiceCommentRecorder({
           ) : recordingState === 'paused' ? (
             <div className="flex items-center space-x-4">
               <button
+                type="button"
                 onClick={resumeRecording}
                 className="flex items-center justify-center w-16 h-16 bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600 transition-colors"
               >
                 <Play className="w-6 h-6" />
               </button>
               <button
+                type="button"
                 onClick={stopRecording}
                 className="flex items-center justify-center w-12 h-12 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors"
               >
@@ -259,6 +264,7 @@ export function VoiceCommentRecorder({
           {/* Action Buttons */}
           <div className="flex items-center space-x-3">
             <button
+              type="button"
               onClick={handleDiscard}
               disabled={disabled}
               className="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
@@ -268,6 +274,7 @@ export function VoiceCommentRecorder({
 
             {!transcription ? (
               <button
+                type="button"
                 onClick={processRecording}
                 disabled={disabled || isProcessing}
                 className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
@@ -276,6 +283,7 @@ export function VoiceCommentRecorder({
               </button>
             ) : (
               <button
+                type="button"
                 onClick={handleSubmit}
                 disabled={disabled}
                 className="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
@@ -299,6 +307,7 @@ export function VoiceCommentRecorder({
             </div>
             {!isEditingTranscription && (
               <button
+                type="button"
                 onClick={() => {
                   setIsEditingTranscription(true)
                   setEditedTranscription(transcription)
@@ -319,6 +328,7 @@ export function VoiceCommentRecorder({
               />
               <div className="flex justify-end space-x-2">
                 <button
+                  type="button"
                   onClick={() => {
                     setIsEditingTranscription(false)
                     setEditedTranscription('')
@@ -328,6 +338,7 @@ export function VoiceCommentRecorder({
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={() => setIsEditingTranscription(false)}
                   className="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
