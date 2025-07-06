@@ -124,10 +124,14 @@ export function IssueDetailPage() {
         .maybeSingle()
 
       if (profile) {
-        setCurrentUser((prev) => ({
-          ...prev,
-          profile,
-        }))
+        setCurrentUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                profile,
+              }
+            : prev
+        )
       }
 
       // Check if user is admin
