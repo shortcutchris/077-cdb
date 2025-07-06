@@ -18,27 +18,6 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { cn } from '@/lib/utils'
 
-// Helper function to get label styles for light/dark mode
-const getLabelStyles = (color: string) => {
-  // Check if we're in dark mode
-  const isDarkMode = document.documentElement.classList.contains('dark')
-
-  if (isDarkMode) {
-    return {
-      backgroundColor: `#${color}30`,
-      color: `#${color}`,
-      border: `1px solid #${color}60`,
-    }
-  } else {
-    // Light mode: use full color background with black text for contrast
-    return {
-      backgroundColor: `#${color}`,
-      color: '#000000',
-      fontWeight: 600,
-    }
-  }
-}
-
 interface GitHubIssue {
   id: number
   number: number
@@ -405,11 +384,29 @@ export function IssueDetailPage() {
                   {issue.labels.map((label) => (
                     <span
                       key={label.id}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                      style={getLabelStyles(label.color)}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{
+                        // Light mode: Use a light tint of the color with black text
+                        backgroundColor: `#${label.color}20`,
+                        color: '#000000',
+                        border: `2px solid #${label.color}`,
+                      }}
                     >
-                      <Tag className="h-3 w-3 mr-1" />
-                      {label.name}
+                      <style
+                        dangerouslySetInnerHTML={{
+                          __html: `
+                          .dark span[data-label-id="${label.id}"] {
+                            background-color: #${label.color}30 !important;
+                            color: #${label.color} !important;
+                            border: 1px solid #${label.color}60 !important;
+                          }
+                        `,
+                        }}
+                      />
+                      <span data-label-id={label.id} className="contents">
+                        <Tag className="h-3 w-3 mr-1" />
+                        {label.name}
+                      </span>
                     </span>
                   ))}
                 </div>
