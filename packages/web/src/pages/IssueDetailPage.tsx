@@ -384,11 +384,11 @@ export function IssueDetailPage() {
                   {issue.labels.map((label) => (
                     <span
                       key={label.id}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium dark:opacity-90"
                       style={{
-                        backgroundColor: `#${label.color}30`,
+                        backgroundColor: `#${label.color}40`,
                         color: `#${label.color}`,
-                        border: `1px solid #${label.color}60`,
+                        border: `1px solid #${label.color}80`,
                       }}
                     >
                       <Tag className="h-3 w-3 mr-1" />
