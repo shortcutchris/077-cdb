@@ -14,6 +14,7 @@ import { SignupPage } from '@/pages/SignupPage'
 import { DebugPage } from '@/pages/DebugPage'
 import { SetupGuidePage } from '@/pages/SetupGuidePage'
 import { TestPage } from '@/pages/TestPage'
+import { IssueDetailPage } from '@/pages/IssueDetailPage'
 
 // Admin Pages
 import { AdminDashboard } from '@/pages/admin/Dashboard'
@@ -53,6 +54,10 @@ function App() {
         }
       >
         <Route index element={<HomePage />} />
+        <Route
+          path="issue/:repository/:issueNumber"
+          element={<IssueDetailPage />}
+        />
       </Route>
 
       {/* Admin routes */}

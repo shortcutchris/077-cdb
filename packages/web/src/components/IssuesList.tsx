@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   GitPullRequest,
   CircleDot,
@@ -414,17 +415,15 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="space-y-1">
-                    <a
-                      href={issue.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to={`/issue/${repository}/${issue.number}`}
                       className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 inline-flex items-center group"
                     >
                       <span className="line-clamp-2 break-words">
                         {issue.title}
                       </span>
                       <ExternalLink className="h-3 w-3 ml-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
+                    </Link>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                       <span>#{issue.number}</span>
                       <span className="flex items-center">
