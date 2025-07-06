@@ -68,8 +68,11 @@ export function IssuesList({ repository, onIssueCreated }: IssuesListProps) {
 
   useEffect(() => {
     if (onIssueCreated) {
-      // Reload issues when a new issue is created
-      loadIssues()
+      // Add a delay to ensure GitHub API has processed the new issue
+      setTimeout(() => {
+        // Reload issues when a new issue is created
+        loadIssues()
+      }, 1500) // 1.5 second delay to give GitHub time to process
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onIssueCreated])
