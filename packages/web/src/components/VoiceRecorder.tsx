@@ -268,36 +268,27 @@ export function VoiceRecorder({
 
             if (error) throw error
 
-            // Show success modal
-            if (data?.success && data?.data?.html_url) {
-              // Set success data for modal
-              setCreatedIssueData({
-                title: generatedIssue.title,
-                url: data.data.html_url,
-                number: data.data.number,
-                repository: selectedRepository,
-              })
-              setIssueCreationSuccess(true)
-              
-              // Auto-hide modal after 5 seconds
-              setTimeout(() => {
-                setIssueCreationSuccess(false)
-                setCreatedIssueData(null)
-              }, 5000)
+                          // Show success modal
+              if (data?.success && data?.data?.html_url) {
+                // Set success data for modal
+                setCreatedIssueData({
+                  title: generatedIssue.title,
+                  url: data.data.html_url,
+                  number: data.data.number,
+                  repository: selectedRepository,
+                })
+                setIssueCreationSuccess(true)
 
-              // Notify parent component that an issue was created
-              onIssueCreated?.()
-
-              // Reset state
-              setGeneratedIssue(null)
-              setProcessingState('idle')
-              setStorageUrl(null)
-              setHasProcessedCurrentRecording(false)
-              // Clear the audio to prevent re-processing
-              resetRecording()
-            } else {
-              throw new Error('Failed to create issue - no URL returned')
-            }
+                // Reset state
+                setGeneratedIssue(null)
+                setProcessingState('idle')
+                setStorageUrl(null)
+                setHasProcessedCurrentRecording(false)
+                // Clear the audio to prevent re-processing
+                resetRecording()
+              } else {
+                throw new Error('Failed to create issue - no URL returned')
+              }
           } catch (err) {
             alert(
               `Error creating issue: ${err instanceof Error ? err.message : 'Unknown error'}`
@@ -511,6 +502,8 @@ export function VoiceRecorder({
                 onClick={() => {
                   setIssueCreationSuccess(false)
                   setCreatedIssueData(null)
+                  // Notify parent component that an issue was created (triggers refresh)
+                  onIssueCreated?.()
                 }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
               >
@@ -534,7 +527,13 @@ export function VoiceRecorder({
               <div className="flex space-x-3">
                 <button
                   onClick={() => {
+                    // Trigger refresh first
+                    onIssueCreated?.()
+                    // Then open the issue
                     window.open(createdIssueData.url, '_blank')
+                    // Close modal
+                    setIssueCreationSuccess(false)
+                    setCreatedIssueData(null)
                   }}
                   className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
@@ -545,6 +544,8 @@ export function VoiceRecorder({
                   onClick={() => {
                     setIssueCreationSuccess(false)
                     setCreatedIssueData(null)
+                    // Notify parent component that an issue was created (triggers refresh)
+                    onIssueCreated?.()
                   }}
                   className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                 >
