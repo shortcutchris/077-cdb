@@ -16,6 +16,7 @@ import { formatDistanceToNow, format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { AudioPlayer } from '@/components/AudioPlayer'
+import { CommentForm } from '@/components/CommentForm'
 import { cn } from '@/lib/utils'
 
 interface GitHubIssue {
@@ -73,6 +74,7 @@ export function IssueDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [loadingComments, setLoadingComments] = useState(false)
+  const [creatingComment, setCreatingComment] = useState(false)
 
   useEffect(() => {
     if (repository && issueNumber) {
@@ -210,6 +212,46 @@ export function IssueDetailPage() {
       console.error('Error loading comments:', err)
     } finally {
       setLoadingComments(false)
+    }
+  }
+
+  const handleCreateComment = async (comment: {
+    body: string
+    audioUrl?: string
+    transcription?: string
+  }) => {
+    if (!repository || !issueNumber) {
+      throw new Error('Repository or issue number not available')
+    }
+
+    setCreatingComment(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('github-create-comment', {
+        body: {
+          repository,
+          issueNumber: parseInt(issueNumber),
+          body: comment.body,
+          audioUrl: comment.audioUrl,
+          transcription: comment.transcription,
+        },
+      })
+
+      if (error) throw error
+
+      if (data?.success) {
+        // Refresh comments to show the new comment
+        await loadIssueDetails()
+        
+        // Show success message
+        console.log('Comment created successfully:', data.data)
+      } else {
+        throw new Error(data?.error || 'Failed to create comment')
+      }
+    } catch (err) {
+      console.error('Error creating comment:', err)
+      throw err
+    } finally {
+      setCreatingComment(false)
     }
   }
 
@@ -486,6 +528,20 @@ export function IssueDetailPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Comment Form */}
+              {issue.state === 'open' && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Add a comment
+                  </h3>
+                  <CommentForm
+                    onSubmit={handleCreateComment}
+                    disabled={creatingComment}
+                    placeholder="Leave a comment..."
+                  />
                 </div>
               )}
             </div>
