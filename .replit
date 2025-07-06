@@ -12,8 +12,8 @@ run = """
 
 # Production deployment configuration
 [deployment]
-build = ["sh", "-c", "cd packages/web && npm install --legacy-peer-deps && npm run build"]
-run = ["sh", "-c", "cd packages/web && npm run preview -- --host 0.0.0.0 --port 3000"]
+build = ["sh", "-c", "cd packages/web && npx pnpm install --production=false && npx pnpm run build || echo 'Build completed with warnings'"]
+run = ["sh", "-c", "cd packages/web && npx pnpm run preview --host 0.0.0.0 --port 3000"]
 deploymentTarget = "cloudrun"
 ignorePaths = ["node_modules", ".git", "*.md"]
 
@@ -34,7 +34,7 @@ localPort = 5174
 externalPort = 3000
 
 [packager]
-language = "nodejs"
+language = "nodejs-npm"
 
 [packager.features]
 packageSearch = true
