@@ -9,6 +9,8 @@ import {
   Clock,
   Tag,
   AlertCircle,
+  Search,
+  X,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -53,6 +55,7 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
   )
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [myIssueNumbers, setMyIssueNumbers] = useState<number[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (repository) {
@@ -64,7 +67,7 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
   useEffect(() => {
     filterIssues()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [issues, filter, myIssueNumbers])
+  }, [issues, filter, myIssueNumbers, searchQuery])
 
   // React to reload trigger changes
   useEffect(() => {
@@ -201,6 +204,7 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
   const filterIssues = () => {
     let filtered = [...issues]
 
+    // Apply state/ownership filter
     if (filter === 'open' || filter === 'closed') {
       filtered = filtered.filter((issue) => issue.state === filter)
     } else if (filter === 'mine') {
@@ -216,6 +220,32 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
         }
         // Also check if created directly on GitHub
         if (githubUsername && issue.user.login === githubUsername) {
+          return true
+        }
+        return false
+      })
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter((issue) => {
+        // Search in title
+        if (issue.title.toLowerCase().includes(query)) {
+          return true
+        }
+        // Search in body
+        if (issue.body && issue.body.toLowerCase().includes(query)) {
+          return true
+        }
+        // Search in issue number
+        if (issue.number.toString().includes(query)) {
+          return true
+        }
+        // Search in labels
+        if (
+          issue.labels.some((label) => label.name.toLowerCase().includes(query))
+        ) {
           return true
         }
         return false
@@ -284,6 +314,31 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
             )}
           />
         </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search issues by title, content, number, or label..."
+            className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                     dark:bg-gray-700 dark:text-gray-200 text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 
+                       dark:text-gray-500 dark:hover:text-gray-300"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter */}
@@ -397,12 +452,22 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
               No issues found
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {filter === 'all'
-                ? 'This repository has no issues yet'
-                : filter === 'mine'
-                  ? 'You have not created any issues in this repository'
-                  : `No ${filter} issues in this repository`}
+              {searchQuery
+                ? `No issues match "${searchQuery}"`
+                : filter === 'all'
+                  ? 'This repository has no issues yet'
+                  : filter === 'mine'
+                    ? 'You have not created any issues in this repository'
+                    : `No ${filter} issues in this repository`}
             </p>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Clear search
+              </button>
+            )}
           </div>
         ) : (
           filteredIssues.map((issue) => (
