@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Mic,
@@ -76,7 +76,7 @@ export function VoiceRecorder({
   )
   const [hasProcessedCurrentRecording, setHasProcessedCurrentRecording] =
     useState(false)
-  
+
   // New state for success modal
   const [issueCreationSuccess, setIssueCreationSuccess] = useState(false)
   const [createdIssueData, setCreatedIssueData] = useState<{
@@ -86,6 +86,9 @@ export function VoiceRecorder({
     repository: string
   } | null>(null)
 
+  // Timer reference for auto-close functionality
+  const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   // Update selected repository when initialRepository changes
   useEffect(() => {
     if (initialRepository) {
@@ -93,11 +96,36 @@ export function VoiceRecorder({
     }
   }, [initialRepository])
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoCloseTimerRef.current) {
+        clearTimeout(autoCloseTimerRef.current)
+      }
+    }
+  }, [])
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
+
+  // Handle manual close of success modal
+  const handleCloseSuccessModal = useCallback(() => {
+    // Clear auto-close timer if it exists
+    if (autoCloseTimerRef.current) {
+      clearTimeout(autoCloseTimerRef.current)
+      autoCloseTimerRef.current = null
+    }
+
+    // Close modal
+    setIssueCreationSuccess(false)
+    setCreatedIssueData(null)
+
+    // Notify parent component only once
+    onIssueCreated?.()
+  }, [onIssueCreated])
 
   const handleStartRecording = async () => {
     setError(null)
@@ -280,13 +308,14 @@ export function VoiceRecorder({
                 repository: selectedRepository,
               })
               setIssueCreationSuccess(true)
-              
+
               // Auto-hide modal after 5 seconds
-              setTimeout(() => {
+              autoCloseTimerRef.current = setTimeout(() => {
                 setIssueCreationSuccess(false)
                 setCreatedIssueData(null)
                 // Notify parent component that an issue was created (when modal closes)
                 onIssueCreated?.()
+                autoCloseTimerRef.current = null
               }, 5000)
 
               // Reset state
@@ -509,18 +538,13 @@ export function VoiceRecorder({
                 </h2>
               </div>
               <button
-                onClick={() => {
-                  setIssueCreationSuccess(false)
-                  setCreatedIssueData(null)
-                  // Notify parent component that an issue was created (when modal closes)
-                  onIssueCreated?.()
-                }}
+                onClick={handleCloseSuccessModal}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
@@ -533,7 +557,7 @@ export function VoiceRecorder({
                   <span>#{createdIssueData.number}</span>
                 </div>
               </div>
-              
+
               <div className="flex space-x-3">
                 <button
                   onClick={() => {
@@ -541,7 +565,9 @@ export function VoiceRecorder({
                     const [owner, repo] = createdIssueData.repository.split('/')
                     if (owner && repo) {
                       // Navigate to internal issue detail page
-                      navigate(`/issue/${owner}/${repo}/${createdIssueData.number}`)
+                      navigate(
+                        `/issue/${owner}/${repo}/${createdIssueData.number}`
+                      )
                     }
                   }}
                   className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -550,12 +576,7 @@ export function VoiceRecorder({
                   <span>View Issue</span>
                 </button>
                 <button
-                  onClick={() => {
-                    setIssueCreationSuccess(false)
-                    setCreatedIssueData(null)
-                    // Notify parent component that an issue was created (when modal closes)
-                    onIssueCreated?.()
-                  }}
+                  onClick={handleCloseSuccessModal}
                   className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                 >
                   Close
