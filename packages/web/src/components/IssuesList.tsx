@@ -228,7 +228,7 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
 
     // Apply search filter
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
+      const query = searchQuery.toLowerCase().trim()
       filtered = filtered.filter((issue) => {
         // Search in title
         if (issue.title.toLowerCase().includes(query)) {
@@ -238,8 +238,13 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
         if (issue.body && issue.body.toLowerCase().includes(query)) {
           return true
         }
-        // Search in issue number
-        if (issue.number.toString().includes(query)) {
+        // Search in issue number (with or without #)
+        const cleanQuery = query.replace(/^#/, '') // Remove leading # if present
+        if (issue.number.toString() === cleanQuery) {
+          return true
+        }
+        // Also allow partial matches for issue numbers
+        if (issue.number.toString().includes(cleanQuery)) {
           return true
         }
         // Search in labels
