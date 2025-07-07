@@ -239,20 +239,16 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
           return true
         }
         // Search in issue number (with or without #)
-        // Check if the query contains the issue number with #
-        if (
-          query === `#${issue.number}` ||
-          query.includes(`#${issue.number}`)
-        ) {
+        // Check for exact match with #
+        if (query === `#${issue.number}`) {
           return true
         }
-        // Check without # (for direct number search)
-        const cleanQuery = query.replace(/^#/, '') // Remove leading # if present
-        if (issue.number.toString() === cleanQuery) {
+        // Check for exact match without #
+        if (query === issue.number.toString()) {
           return true
         }
-        // Also allow partial matches for issue numbers
-        if (issue.number.toString().includes(cleanQuery)) {
+        // For partial matches, only check numbers without #
+        if (!query.includes('#') && issue.number.toString().includes(query)) {
           return true
         }
         // Search in labels
