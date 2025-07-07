@@ -239,6 +239,14 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
           return true
         }
         // Search in issue number (with or without #)
+        // Check if the query contains the issue number with #
+        if (
+          query === `#${issue.number}` ||
+          query.includes(`#${issue.number}`)
+        ) {
+          return true
+        }
+        // Check without # (for direct number search)
         const cleanQuery = query.replace(/^#/, '') // Remove leading # if present
         if (issue.number.toString() === cleanQuery) {
           return true
