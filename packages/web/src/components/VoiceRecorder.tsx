@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Mic,
   Pause,
@@ -8,7 +9,7 @@ import {
   GitBranch,
   AlertCircle,
   CheckCircle2,
-  ExternalLink,
+  Eye,
   X,
 } from 'lucide-react'
 import { useAudioRecorder } from '@/hooks/useAudioRecorder'
@@ -42,6 +43,7 @@ export function VoiceRecorder({
 }: VoiceRecorderProps) {
   const { user } = useAuth()
   const { repositories, loading: reposLoading } = useUserRepositories()
+  const navigate = useNavigate()
   const {
     recordingState,
     startRecording,
@@ -535,11 +537,16 @@ export function VoiceRecorder({
               <div className="flex space-x-3">
                 <button
                   onClick={() => {
-                    window.open(createdIssueData.url, '_blank')
+                    // Parse repository to get owner and repo
+                    const [owner, repo] = createdIssueData.repository.split('/')
+                    if (owner && repo) {
+                      // Navigate to internal issue detail page
+                      navigate(`/issue/${owner}/${repo}/${createdIssueData.number}`)
+                    }
                   }}
                   className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <Eye className="h-4 w-4" />
                   <span>View Issue</span>
                 </button>
                 <button
