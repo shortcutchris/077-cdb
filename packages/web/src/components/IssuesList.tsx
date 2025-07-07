@@ -325,18 +325,26 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search issues by title, content, number, or label..."
-            className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                     dark:bg-gray-700 dark:text-gray-200 text-sm"
+            className={cn(
+              'w-full pl-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg',
+              'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+              'dark:bg-gray-700 dark:text-gray-200 text-sm',
+              searchQuery ? 'pr-20' : 'pr-10'
+            )}
           />
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 
-                       dark:text-gray-500 dark:hover:text-gray-300"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <>
+              <span className="absolute right-10 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 mr-2">
+                {filteredIssues.length}/{issues.length}
+              </span>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 
+                         dark:text-gray-500 dark:hover:text-gray-300"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </>
           )}
         </div>
       </div>
