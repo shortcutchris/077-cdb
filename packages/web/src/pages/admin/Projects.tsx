@@ -8,12 +8,13 @@ import { cn } from '@/lib/utils'
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
   PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
   useDroppable,
+  pointerWithin,
+  rectIntersection,
 } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -77,6 +78,27 @@ export function ProjectsPage() {
       },
     })
   )
+
+  // Custom collision detection that prioritizes columns
+  const collisionDetection = (args: Parameters<typeof pointerWithin>[0]) => {
+    // First try to find collisions with columns
+    const columnCollisions = args.droppableContainers.filter((container) =>
+      container.id.toString().startsWith('column-')
+    )
+
+    const pointerCollisions = pointerWithin({
+      ...args,
+      droppableContainers: columnCollisions,
+    })
+
+    // If we found a column collision, use it
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions
+    }
+
+    // Otherwise fall back to rect intersection
+    return rectIntersection(args)
+  }
 
   useEffect(() => {
     loadAllIssues()
@@ -193,7 +215,6 @@ export function ProjectsPage() {
     const { active, over } = event
     setActiveId(null)
 
-    /* eslint-disable no-console */
     // Debug logs for drag & drop issues
     console.log('Drag end event:', {
       activeId: active.id,
@@ -220,9 +241,9 @@ export function ProjectsPage() {
     let targetStatus: string | null = null
 
     // Check if we dropped on a column directly
-    const columnStatuses = ['open', 'planned', 'in-progress', 'done']
-    if (columnStatuses.includes(over.id as string)) {
-      targetStatus = over.id as string
+    const overId = over.id as string
+    if (overId.startsWith('column-')) {
+      targetStatus = overId.replace('column-', '')
       console.log('Dropped on column:', targetStatus)
     } else if (over.data?.current?.type === 'column') {
       // Check if the over data indicates a column
@@ -258,7 +279,6 @@ export function ProjectsPage() {
       console.log('Status unchanged, skipping')
       return
     }
-    /* eslint-enable no-console */
 
     // OPTIMISTIC UPDATE - Move issue immediately for better UX
     const oldStatus = currentStatus as keyof GroupedIssues
@@ -322,7 +342,6 @@ export function ProjectsPage() {
     newStatus: string,
     updateUI: boolean = true
   ) => {
-    // eslint-disable-next-line no-console
     console.log('Updating issue status:', {
       issueId,
       repository,
@@ -331,7 +350,7 @@ export function ProjectsPage() {
     })
     setUpdatingIssue(issueId)
     try {
-      const { data, error } = await supabase.functions.invoke(
+      const { data } = await supabase.functions.invoke(
         'github-update-issue-status',
         {
           body: {
@@ -342,10 +361,9 @@ export function ProjectsPage() {
         }
       )
 
-      // eslint-disable-next-line no-console
-      console.log('Edge function response:', { data, error })
+      console.log('Edge function response:', { data })
 
-      if (error) throw error
+      if (!data?.success) throw new Error('Failed to update issue status')
 
       if (data?.success && updateUI) {
         // Only update UI if requested (not for drag & drop)
@@ -547,7 +565,7 @@ export function ProjectsPage() {
             <div className="hidden md:block">
               <DndContext
                 sensors={sensors}
-                collisionDetection={closestCenter}
+                collisionDetection={collisionDetection}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
               >
@@ -634,13 +652,60 @@ function DroppableColumn({
   issues,
   updatingIssue,
 }: DroppableColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: status.value,
+  const { setNodeRef, isOver, active } = useDroppable({
+    id: `column-${status.value}`,
     data: {
       type: 'column',
       status: status.value,
     },
   })
+
+  // Get the active issue from the drag data
+  const activeIssue = active?.data?.current?.issue as GitHubIssue | undefined
+
+  // Determine which column the dragged issue currently belongs to
+  let activeIssueStatus = 'open' // default
+  if (activeIssue) {
+    const statusLabel = activeIssue.labels?.find((l: { name: string }) =>
+      l.name.startsWith('status:')
+    )
+    if (statusLabel) {
+      activeIssueStatus = statusLabel.name.replace('status:', '')
+    } else if (activeIssue.state === 'closed') {
+      // If no status label but issue is closed, it's in 'done'
+      activeIssueStatus = 'done'
+    }
+  }
+
+  // Check if the active issue belongs to this column
+  const isDraggingFromThisColumn = active && activeIssueStatus === status.value
+
+  // Only highlight if we're hovering over a different column
+  const shouldHighlight = isOver && active && !isDraggingFromThisColumn
+
+  // Debug Log
+  useEffect(() => {
+    if (active) {
+      console.log(`Column ${status.value}:`, {
+        isOver,
+        isDraggingFromThisColumn,
+        activeIssueStatus,
+        shouldHighlight,
+        activeId: active?.id,
+        activeIssue: activeIssue
+          ? { id: activeIssue.id, title: activeIssue.title }
+          : null,
+      })
+    }
+  }, [
+    isOver,
+    active,
+    status.value,
+    isDraggingFromThisColumn,
+    shouldHighlight,
+    activeIssueStatus,
+    activeIssue,
+  ])
 
   const getHeaderColorClasses = (color: string) => {
     switch (color) {
@@ -661,9 +726,11 @@ function DroppableColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden transition-all flex flex-col h-full',
-        isOver && 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20'
+        'bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden transition-all flex flex-col h-full relative',
+        shouldHighlight &&
+          'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
       )}
+      style={{ minHeight: '300px' }}
     >
       <div
         className={cn('p-4 rounded-t-xl', getHeaderColorClasses(status.color))}
@@ -678,29 +745,44 @@ function DroppableColumn({
           </span>
         </div>
       </div>
-      <div className="flex-1 p-3 overflow-y-auto min-h-[200px]">
-        {issues.length === 0 ? (
-          <div className="flex items-center justify-center h-full min-h-[150px]">
-            <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">
-              Drop issues here
-            </p>
-          </div>
-        ) : (
-          <SortableContext
-            items={issues.map((i) => i.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-3">
-              {issues.map((issue) => (
-                <DraggableIssueCard
-                  key={issue.id}
-                  issue={issue}
-                  isUpdating={updatingIssue === issue.id}
-                />
-              ))}
+      <div className="flex-1 overflow-y-auto min-h-[200px]">
+        <div className="h-full p-3">
+          {issues.length === 0 ? (
+            <div
+              className={cn(
+                'flex items-center justify-center h-full min-h-[150px] transition-all rounded-lg',
+                shouldHighlight &&
+                  'bg-blue-100 dark:bg-blue-900/30 border-2 border-dashed border-blue-400'
+              )}
+            >
+              <p
+                className={cn(
+                  'text-sm font-medium transition-all',
+                  shouldHighlight
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-gray-400 dark:text-gray-500'
+                )}
+              >
+                {shouldHighlight ? 'Drop here' : 'Drop issues here'}
+              </p>
             </div>
-          </SortableContext>
-        )}
+          ) : (
+            <SortableContext
+              items={issues.map((i) => i.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3 min-h-[100px]">
+                {issues.map((issue) => (
+                  <DraggableIssueCard
+                    key={issue.id}
+                    issue={issue}
+                    isUpdating={updatingIssue === issue.id}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          )}
+        </div>
       </div>
     </div>
   )
