@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  closestCenter,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -193,7 +193,16 @@ export function ProjectsPage() {
     const { active, over } = event
     setActiveId(null)
 
+    /* eslint-disable no-console */
+    // Debug logs for drag & drop issues
+    console.log('Drag end event:', {
+      activeId: active.id,
+      overId: over?.id,
+      overData: over?.data?.current,
+    })
+
     if (!over) {
+      console.log('No drop target found')
       return
     }
 
@@ -202,26 +211,38 @@ export function ProjectsPage() {
       .flat()
       .find((issue) => issue.id === active.id)
 
-    if (!draggedIssue) return
+    if (!draggedIssue) {
+      console.log('Could not find dragged issue')
+      return
+    }
 
     // Determine the target status
     let targetStatus: string | null = null
 
-    // Check if we dropped on a column
+    // Check if we dropped on a column directly
     const columnStatuses = ['open', 'planned', 'in-progress', 'done']
     if (columnStatuses.includes(over.id as string)) {
       targetStatus = over.id as string
+      console.log('Dropped on column:', targetStatus)
+    } else if (over.data?.current?.type === 'column') {
+      // Check if the over data indicates a column
+      targetStatus = over.data.current.status
+      console.log('Dropped on column via data:', targetStatus)
     } else {
       // If we dropped on an issue, find its parent column
       for (const [status, issues] of Object.entries(groupedIssues)) {
         if (issues.some((issue: GitHubIssue) => issue.id === over.id)) {
           targetStatus = status
+          console.log('Dropped on issue in column:', targetStatus)
           break
         }
       }
     }
 
-    if (!targetStatus) return
+    if (!targetStatus) {
+      console.log('Could not determine target status')
+      return
+    }
 
     // Get current status from labels
     const currentStatusLabel = draggedIssue.labels.find((l: { name: string }) =>
@@ -230,8 +251,14 @@ export function ProjectsPage() {
     const currentStatus =
       currentStatusLabel?.name.replace('status:', '') || 'open'
 
+    console.log('Status change:', currentStatus, '->', targetStatus)
+
     // If status hasn't changed, do nothing
-    if (currentStatus === targetStatus) return
+    if (currentStatus === targetStatus) {
+      console.log('Status unchanged, skipping')
+      return
+    }
+    /* eslint-enable no-console */
 
     // Update the issue status
     await handleStatusChange(
@@ -248,6 +275,13 @@ export function ProjectsPage() {
     issueNumber: number,
     newStatus: string
   ) => {
+    // eslint-disable-next-line no-console
+    console.log('Updating issue status:', {
+      issueId,
+      repository,
+      issueNumber,
+      newStatus,
+    })
     setUpdatingIssue(issueId)
     try {
       const { data, error } = await supabase.functions.invoke(
@@ -260,6 +294,9 @@ export function ProjectsPage() {
           },
         }
       )
+
+      // eslint-disable-next-line no-console
+      console.log('Edge function response:', { data, error })
 
       if (error) throw error
 
@@ -308,7 +345,15 @@ export function ProjectsPage() {
       }
     } catch (err) {
       console.error('Error updating status:', err)
-      alert('Failed to update issue status')
+      // Mehr Details für Debugging
+      if (err instanceof Error) {
+        console.error('Error details:', err.message)
+        alert(`Failed to update issue status: ${err.message}`)
+      } else {
+        alert('Failed to update issue status')
+      }
+      // Issue-Liste neu laden bei Fehler
+      await loadAllIssues()
     } finally {
       setUpdatingIssue(null)
     }
@@ -454,7 +499,7 @@ export function ProjectsPage() {
             <div className="hidden md:block">
               <DndContext
                 sensors={sensors}
-                collisionDetection={closestCorners}
+                collisionDetection={closestCenter}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
               >
@@ -583,27 +628,28 @@ function DroppableColumn({
           </span>
         </div>
       </div>
-      <div className="flex-1 p-3 overflow-y-auto">
-        <SortableContext
-          items={issues.map((i) => i.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-3">
-            {issues.map((issue) => (
-              <DraggableIssueCard
-                key={issue.id}
-                issue={issue}
-                isUpdating={updatingIssue === issue.id}
-              />
-            ))}
-          </div>
-        </SortableContext>
-        {issues.length === 0 && (
-          <div className="flex items-center justify-center h-32">
+      <div className="flex-1 p-3 overflow-y-auto min-h-[200px]">
+        {issues.length === 0 ? (
+          <div className="flex items-center justify-center h-full min-h-[150px]">
             <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">
               Drop issues here
             </p>
           </div>
+        ) : (
+          <SortableContext
+            items={issues.map((i) => i.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {issues.map((issue) => (
+                <DraggableIssueCard
+                  key={issue.id}
+                  issue={issue}
+                  isUpdating={updatingIssue === issue.id}
+                />
+              ))}
+            </div>
+          </SortableContext>
         )}
       </div>
     </div>
