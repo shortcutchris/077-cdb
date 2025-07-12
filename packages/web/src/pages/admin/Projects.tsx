@@ -6,15 +6,14 @@ import { ISSUE_STATUSES } from '@/constants/issueStatuses'
 import { cn } from '@/lib/utils'
 import {
   DndContext,
-  DragEndEvent,
   DragOverlay,
-  DragStartEvent,
   closestCorners,
   PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -203,7 +202,7 @@ export function ProjectsPage() {
     if (!validStatuses.includes(newStatus)) return
 
     // Get current status from labels
-    const currentStatusLabel = draggedIssue.labels.find((l) =>
+    const currentStatusLabel = draggedIssue.labels.find((l: { name: string }) =>
       l.name.startsWith('status:')
     )
     const currentStatus =
@@ -251,7 +250,7 @@ export function ProjectsPage() {
         if (issue) {
           // Remove from old status
           const oldStatus = issue.labels
-            .find((l) => l.name.startsWith('status:'))
+            .find((l: { name: string }) => l.name.startsWith('status:'))
             ?.name.replace('status:', '') as keyof GroupedIssues
 
           if (oldStatus && oldStatus !== newStatus) {
@@ -265,7 +264,9 @@ export function ProjectsPage() {
               const updatedIssue = {
                 ...issue,
                 labels: [
-                  ...issue.labels.filter((l) => !l.name.startsWith('status:')),
+                  ...issue.labels.filter(
+                    (l: { name: string }) => !l.name.startsWith('status:')
+                  ),
                   {
                     name: `status:${newStatus}`,
                     color: getStatusColor(newStatus),
