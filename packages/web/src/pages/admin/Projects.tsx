@@ -82,21 +82,42 @@ export function ProjectsPage() {
   // Custom collision detection that prioritizes columns
   const collisionDetection = (args: Parameters<typeof pointerWithin>[0]) => {
     // First try to find collisions with columns
-    const columnCollisions = args.droppableContainers.filter((container) =>
+    const columnContainers = args.droppableContainers.filter((container) =>
       container.id.toString().startsWith('column-')
     )
 
-    const pointerCollisions = pointerWithin({
-      ...args,
-      droppableContainers: columnCollisions,
-    })
+    // Use a more generous collision detection for columns
+    const collisions = []
 
-    // If we found a column collision, use it
-    if (pointerCollisions.length > 0) {
-      return pointerCollisions
+    if (args.pointerCoordinates) {
+      for (const container of columnContainers) {
+        const rect = container.rect.current
+        if (!rect) continue
+
+        const { x, y } = args.pointerCoordinates
+
+        // Check if pointer is within the column bounds with some padding
+        const padding = 20
+        if (
+          x >= rect.left - padding &&
+          x <= rect.right + padding &&
+          y >= rect.top - padding &&
+          y <= rect.bottom + padding
+        ) {
+          collisions.push({
+            id: container.id,
+            data: { droppableContainer: container },
+          })
+        }
+      }
     }
 
-    // Otherwise fall back to rect intersection
+    // If we found column collisions, return the closest one
+    if (collisions.length > 0) {
+      return collisions
+    }
+
+    // Otherwise fall back to rect intersection for sortable items
     return rectIntersection(args)
   }
 
@@ -569,7 +590,10 @@ export function ProjectsPage() {
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
               >
-                <div className="grid grid-cols-4 gap-6 h-[calc(100vh-240px)]">
+                <div
+                  className="grid grid-cols-4 gap-6"
+                  style={{ height: 'calc(100vh - 16rem)' }}
+                >
                   {ISSUE_STATUSES.map((status) => (
                     <DroppableColumn
                       key={status.value}
@@ -726,11 +750,11 @@ function DroppableColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden transition-all flex flex-col h-full relative',
+        'bg-gray-100 dark:bg-gray-800 rounded-xl transition-all flex flex-col h-full relative',
         shouldHighlight &&
           'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
       )}
-      style={{ minHeight: '300px' }}
+      style={{ minHeight: '400px' }}
     >
       <div
         className={cn('p-4 rounded-t-xl', getHeaderColorClasses(status.color))}
@@ -745,44 +769,50 @@ function DroppableColumn({
           </span>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto min-h-[200px]">
-        <div className="h-full p-3">
-          {issues.length === 0 ? (
-            <div
+      <div
+        className="flex-1 p-3 overflow-y-auto"
+        style={{ minHeight: '200px' }}
+      >
+        {issues.length === 0 ? (
+          <div
+            className={cn(
+              'flex items-center justify-center h-full min-h-[200px] transition-all rounded-lg p-4',
+              shouldHighlight
+                ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-dashed border-blue-400'
+                : 'bg-gray-50 dark:bg-gray-900/30 border-2 border-dashed border-gray-300 dark:border-gray-700'
+            )}
+          >
+            <p
               className={cn(
-                'flex items-center justify-center h-full min-h-[150px] transition-all rounded-lg',
-                shouldHighlight &&
-                  'bg-blue-100 dark:bg-blue-900/30 border-2 border-dashed border-blue-400'
+                'text-sm font-medium transition-all',
+                shouldHighlight
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-400 dark:text-gray-500'
               )}
             >
-              <p
-                className={cn(
-                  'text-sm font-medium transition-all',
-                  shouldHighlight
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-400 dark:text-gray-500'
-                )}
-              >
-                {shouldHighlight ? 'Drop here' : 'Drop issues here'}
-              </p>
+              {shouldHighlight ? 'Drop here' : 'Drop issues here'}
+            </p>
+          </div>
+        ) : (
+          <SortableContext
+            items={issues.map((i) => i.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {issues.map((issue) => (
+                <DraggableIssueCard
+                  key={issue.id}
+                  issue={issue}
+                  isUpdating={updatingIssue === issue.id}
+                />
+              ))}
+              {/* Invisible drop zone at the bottom for better detection */}
+              {active && !isDraggingFromThisColumn && (
+                <div className="h-20 opacity-0" />
+              )}
             </div>
-          ) : (
-            <SortableContext
-              items={issues.map((i) => i.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-3 min-h-[100px]">
-                {issues.map((issue) => (
-                  <DraggableIssueCard
-                    key={issue.id}
-                    issue={issue}
-                    isUpdating={updatingIssue === issue.id}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          )}
-        </div>
+          </SortableContext>
+        )}
       </div>
     </div>
   )
