@@ -67,13 +67,13 @@ export function ProjectsPage() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 3, // Reduziert von 8 für schnellere Aktivierung
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
-        tolerance: 8,
+        delay: 100, // Reduziert von 200
+        tolerance: 5, // Reduziert von 8
       },
     })
   )
@@ -260,20 +260,67 @@ export function ProjectsPage() {
     }
     /* eslint-enable no-console */
 
-    // Update the issue status
-    await handleStatusChange(
-      draggedIssue.id,
-      draggedIssue.repository!.full_name,
-      draggedIssue.number,
-      targetStatus
-    )
+    // OPTIMISTIC UPDATE - Move issue immediately for better UX
+    const oldStatus = currentStatus as keyof GroupedIssues
+    const newStatus = targetStatus as keyof GroupedIssues
+
+    // Create updated issue with new status
+    const updatedIssue = {
+      ...draggedIssue,
+      labels: [
+        ...draggedIssue.labels.filter(
+          (l: { name: string }) => !l.name.startsWith('status:')
+        ),
+        {
+          name: `status:${targetStatus}`,
+          color: getStatusColor(targetStatus),
+        },
+      ],
+      state: targetStatus === 'done' ? ('closed' as const) : ('open' as const),
+    }
+
+    // Update state optimistically
+    setGroupedIssues((prev) => {
+      const newGrouped = { ...prev }
+      // Remove from old column
+      newGrouped[oldStatus] = newGrouped[oldStatus].filter(
+        (i) => i.id !== draggedIssue.id
+      )
+      // Add to new column
+      newGrouped[newStatus] = [...newGrouped[newStatus], updatedIssue]
+      return newGrouped
+    })
+
+    // Update the issue status on server
+    try {
+      await handleStatusChange(
+        draggedIssue.id,
+        draggedIssue.repository!.full_name,
+        draggedIssue.number,
+        targetStatus,
+        false // Don't update UI again
+      )
+    } catch (error) {
+      // Revert on error
+      setGroupedIssues((prev) => {
+        const newGrouped = { ...prev }
+        // Remove from new column
+        newGrouped[newStatus] = newGrouped[newStatus].filter(
+          (i) => i.id !== draggedIssue.id
+        )
+        // Add back to old column
+        newGrouped[oldStatus] = [...newGrouped[oldStatus], draggedIssue]
+        return newGrouped
+      })
+    }
   }
 
   const handleStatusChange = async (
     issueId: number,
     repository: string,
     issueNumber: number,
-    newStatus: string
+    newStatus: string,
+    updateUI: boolean = true
   ) => {
     // eslint-disable-next-line no-console
     console.log('Updating issue status:', {
@@ -300,7 +347,8 @@ export function ProjectsPage() {
 
       if (error) throw error
 
-      if (data?.success) {
+      if (data?.success && updateUI) {
+        // Only update UI if requested (not for drag & drop)
         // Move issue to new status group
         const issue = Object.values(groupedIssues)
           .flat()
