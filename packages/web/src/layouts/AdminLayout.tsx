@@ -92,36 +92,31 @@ export function AdminLayout() {
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation
-              .filter(
-                (item) =>
-                  !item.superAdminOnly || adminRole?.role === 'super_admin'
-              )
-              .map((item) => {
-                const isActive = location.pathname === item.href
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    'group flex items-center px-2 py-2 text-sm font-medium rounded-md',
+                    isActive
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                  )}
+                >
+                  <item.icon
                     className={cn(
-                      'group flex items-center px-2 py-2 text-sm font-medium rounded-md',
+                      'mr-3 h-5 w-5 flex-shrink-0',
                       isActive
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                        ? 'text-blue-700 dark:text-blue-300'
+                        : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
                     )}
-                  >
-                    <item.icon
-                      className={cn(
-                        'mr-3 h-5 w-5 flex-shrink-0',
-                        isActive
-                          ? 'text-blue-700 dark:text-blue-300'
-                          : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
-                      )}
-                    />
-                    {item.name}
-                  </Link>
-                )
-              })}
+                  />
+                  {item.name}
+                </Link>
+              )
+            })}
           </nav>
 
           {/* Back to app */}

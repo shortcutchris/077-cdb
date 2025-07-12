@@ -332,6 +332,13 @@ export function IssueDetailPage() {
   const handleStatusChange = async (newStatus: string) => {
     if (!repository || !issueNumber) return
 
+    console.log(
+      'Changing status to:',
+      newStatus,
+      'for',
+      repository,
+      issueNumber
+    )
     setUpdatingStatus(true)
     try {
       const { data, error } = await supabase.functions.invoke(
@@ -345,6 +352,7 @@ export function IssueDetailPage() {
         }
       )
 
+      console.log('Edge function response:', { data, error })
       if (error) throw error
 
       if (data?.success) {
@@ -384,7 +392,11 @@ export function IssueDetailPage() {
       }
     } catch (err) {
       console.error('Error updating status:', err)
-      alert('Failed to update issue status')
+      if (err instanceof Error) {
+        alert(`Failed to update issue status: ${err.message}`)
+      } else {
+        alert('Failed to update issue status')
+      }
     } finally {
       setUpdatingStatus(false)
     }
@@ -714,6 +726,11 @@ export function IssueDetailPage() {
                       const currentStatus = statusLabel
                         ? statusLabel.name.replace('status:', '')
                         : 'open'
+
+                      console.log(
+                        'Rendering status selector with:',
+                        currentStatus
+                      )
 
                       return (
                         <IssueStatusSelector
