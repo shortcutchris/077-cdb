@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   Menu,
   X,
+  Kanban,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -17,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Projects', href: '/admin/projects', icon: Kanban },
   { name: 'Access Tokens', href: '/admin/tokens', icon: Key },
   { name: 'Repositories', href: '/admin/repositories', icon: GitBranch },
   { name: 'Users', href: '/admin/users', icon: Users },

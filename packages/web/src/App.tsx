@@ -23,6 +23,7 @@ import { AdminRepositories } from '@/pages/admin/Repositories'
 import { AdminUsers } from '@/pages/admin/Users'
 import { AdminPermissionsSplitView } from '@/pages/admin/PermissionsSplitView'
 import { AdminAuditLog } from '@/pages/admin/AuditLog'
+import { ProjectsPage } from '@/pages/admin/Projects'
 
 function App() {
   const { loading } = useAuth()
@@ -75,6 +76,7 @@ function App() {
         <Route path="users" element={<AdminUsers />} />
         <Route path="permissions" element={<AdminPermissionsSplitView />} />
         <Route path="audit" element={<AdminAuditLog />} />
+        <Route path="projects" element={<ProjectsPage />} />
       </Route>
 
       {/* Catch all */}
