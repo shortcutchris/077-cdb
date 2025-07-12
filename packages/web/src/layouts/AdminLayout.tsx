@@ -16,9 +16,19 @@ import { cn } from '@/lib/utils'
 import { useAdmin } from '@/contexts/AdminContext'
 import { useAuth } from '@/contexts/AuthContext'
 
-const navigation = [
+const navigation: Array<{
+  name: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  superAdminOnly?: boolean
+}> = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Projects', href: '/admin/projects', icon: Kanban },
+  {
+    name: 'Projects',
+    href: '/admin/projects',
+    icon: Kanban,
+    superAdminOnly: true,
+  },
   { name: 'Access Tokens', href: '/admin/tokens', icon: Key },
   { name: 'Repositories', href: '/admin/repositories', icon: GitBranch },
   { name: 'Users', href: '/admin/users', icon: Users },
@@ -83,31 +93,36 @@ export function AdminLayout() {
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    'group flex items-center px-2 py-2 text-sm font-medium rounded-md',
-                    isActive
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
-                  )}
-                >
-                  <item.icon
-                    className={cn(
-                      'mr-3 h-5 w-5 flex-shrink-0',
-                      isActive
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
-                    )}
-                  />
-                  {item.name}
-                </Link>
+            {navigation
+              .filter(
+                (item) =>
+                  !item.superAdminOnly || adminRole?.role === 'super_admin'
               )
-            })}
+              .map((item) => {
+                const isActive = location.pathname === item.href
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={cn(
+                      'group flex items-center px-2 py-2 text-sm font-medium rounded-md',
+                      isActive
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                    )}
+                  >
+                    <item.icon
+                      className={cn(
+                        'mr-3 h-5 w-5 flex-shrink-0',
+                        isActive
+                          ? 'text-blue-700 dark:text-blue-300'
+                          : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
+                      )}
+                    />
+                    {item.name}
+                  </Link>
+                )
+              })}
           </nav>
 
           {/* Back to app */}
