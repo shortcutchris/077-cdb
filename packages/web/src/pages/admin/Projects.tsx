@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { AlertCircle, GitBranch, ChevronDown } from 'lucide-react'
@@ -203,28 +204,24 @@ export function ProjectsPage() {
 
     if (!draggedIssue) return
 
-    // Determine which column it was dropped into
-    // Check if we're dropping on a column or an issue within a column
-    let newStatus: string
-    const validStatuses = ['open', 'planned', 'in-progress', 'done']
+    // Determine the target status
+    let targetStatus: string | null = null
 
-    // If dropping on a column directly
-    if (validStatuses.includes(over.id as string)) {
-      newStatus = over.id as string
+    // Check if we dropped on a column
+    const columnStatuses = ['open', 'planned', 'in-progress', 'done']
+    if (columnStatuses.includes(over.id as string)) {
+      targetStatus = over.id as string
     } else {
-      // If dropping on an issue, find which column it belongs to
-      const targetIssue = Object.values(groupedIssues)
-        .flat()
-        .find((issue) => issue.id === over.id)
-
-      if (!targetIssue) return
-
-      // Find the status from the target issue's labels
-      const statusLabel = targetIssue.labels.find((l: { name: string }) =>
-        l.name.startsWith('status:')
-      )
-      newStatus = statusLabel?.name.replace('status:', '') || 'open'
+      // If we dropped on an issue, find its parent column
+      for (const [status, issues] of Object.entries(groupedIssues)) {
+        if (issues.some((issue) => issue.id === over.id)) {
+          targetStatus = status
+          break
+        }
+      }
     }
+
+    if (!targetStatus) return
 
     // Get current status from labels
     const currentStatusLabel = draggedIssue.labels.find((l: { name: string }) =>
@@ -234,14 +231,14 @@ export function ProjectsPage() {
       currentStatusLabel?.name.replace('status:', '') || 'open'
 
     // If status hasn't changed, do nothing
-    if (currentStatus === newStatus) return
+    if (currentStatus === targetStatus) return
 
     // Update the issue status
     await handleStatusChange(
       draggedIssue.id,
       draggedIssue.repository!.full_name,
       draggedIssue.number,
-      newStatus
+      targetStatus
     )
   }
 
@@ -586,12 +583,11 @@ function DroppableColumn({
           </span>
         </div>
       </div>
-      <SortableContext
-        items={issues.map((i) => i.id)}
-        strategy={verticalListSortingStrategy}
-        id={status.value}
-      >
-        <div className="flex-1 p-3 overflow-y-auto">
+      <div className="flex-1 p-3 overflow-y-auto">
+        <SortableContext
+          items={issues.map((i) => i.id)}
+          strategy={verticalListSortingStrategy}
+        >
           <div className="space-y-3">
             {issues.map((issue) => (
               <DraggableIssueCard
@@ -601,15 +597,15 @@ function DroppableColumn({
               />
             ))}
           </div>
-          {issues.length === 0 && (
-            <div className="flex items-center justify-center h-32">
-              <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">
-                Drop issues here
-              </p>
-            </div>
-          )}
-        </div>
-      </SortableContext>
+        </SortableContext>
+        {issues.length === 0 && (
+          <div className="flex items-center justify-center h-32">
+            <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">
+              Drop issues here
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -683,15 +679,13 @@ function IssueCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <a
-            href={issue.html_url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to={`/issue/${issue.repository?.owner}/${issue.repository?.name}/${issue.number}`}
             className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 block line-clamp-2"
             onClick={(e) => e.stopPropagation()}
           >
             {issue.title}
-          </a>
+          </Link>
           <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1">
               <GitBranch className="h-3 w-3" />
