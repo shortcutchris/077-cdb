@@ -457,6 +457,21 @@ export function ProjectsPage() {
           : '6f42c1'
   }
 
+  const getIconColorClass = (color: string) => {
+    switch (color) {
+      case 'green':
+        return 'text-green-600 dark:text-green-400'
+      case 'blue':
+        return 'text-blue-600 dark:text-blue-400'
+      case 'yellow':
+        return 'text-yellow-600 dark:text-yellow-400'
+      case 'purple':
+        return 'text-purple-600 dark:text-purple-400'
+      default:
+        return 'text-gray-600 dark:text-gray-400'
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -517,7 +532,15 @@ export function ProjectsPage() {
                   className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-lg">
+                    <span
+                      className={cn(
+                        'text-lg',
+                        getIconColorClass(
+                          ISSUE_STATUSES.find((s) => s.value === selectedStatus)
+                            ?.color || ''
+                        )
+                      )}
+                    >
                       {
                         ISSUE_STATUSES.find((s) => s.value === selectedStatus)
                           ?.icon
@@ -529,7 +552,7 @@ export function ProjectsPage() {
                           ?.label
                       }
                     </span>
-                    <span className="text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                       {
                         groupedIssues[selectedStatus as keyof GroupedIssues]
                           .length
@@ -559,16 +582,18 @@ export function ProjectsPage() {
                             setIsDropdownOpen(false)
                           }}
                           className={cn(
-                            'w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700',
+                            'w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100',
                             status.value === selectedStatus &&
                               'bg-gray-50 dark:bg-gray-700'
                           )}
                         >
                           <div className="flex items-center gap-2">
-                            {status.icon}
+                            <span className={getIconColorClass(status.color)}>
+                              {status.icon}
+                            </span>
                             <span>{status.label}</span>
                           </div>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
                             {
                               groupedIssues[status.value as keyof GroupedIssues]
                                 .length
