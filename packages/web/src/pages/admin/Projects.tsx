@@ -563,7 +563,9 @@ export function ProjectsPage() {
                     />
                   ))}
                 </div>
-                <DragOverlay>
+                <DragOverlay
+                  dropAnimation={null} // Deaktiviert die Drop-Animation
+                >
                   {activeId ? (
                     <div className="transform rotate-2 opacity-95">
                       <IssueCard
@@ -710,24 +712,18 @@ interface DraggableIssueCardProps {
 }
 
 function DraggableIssueCard({ issue, isUpdating }: DraggableIssueCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: issue.id,
-    data: {
-      type: 'issue',
-      issue,
-    },
-  })
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useSortable({
+      id: issue.id,
+      data: {
+        type: 'issue',
+        issue,
+      },
+    })
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? undefined : 'none', // Keine Transition nach dem Drop
   }
 
   return (
@@ -736,7 +732,7 @@ function DraggableIssueCard({ issue, isUpdating }: DraggableIssueCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className={cn(isDragging && 'opacity-0')}
+      className={cn('transition-all duration-200', isDragging && 'opacity-0')}
     >
       <IssueCard
         issue={issue}
@@ -767,7 +763,7 @@ function IssueCard({
       className={cn(
         'bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm hover:shadow-md transition-all cursor-move',
         'border border-gray-200 dark:border-gray-700',
-        isUpdating && 'opacity-50 pointer-events-none',
+        isUpdating && 'opacity-50 pointer-events-none ring-2 ring-blue-500',
         isDragging && 'shadow-xl scale-105 rotate-1'
       )}
     >
