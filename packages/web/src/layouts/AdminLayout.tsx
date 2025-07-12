@@ -27,7 +27,6 @@ const navigation: Array<{
     name: 'Projects',
     href: '/admin/projects',
     icon: Kanban,
-    superAdminOnly: true,
   },
   { name: 'Access Tokens', href: '/admin/tokens', icon: Key },
   { name: 'Repositories', href: '/admin/repositories', icon: GitBranch },
