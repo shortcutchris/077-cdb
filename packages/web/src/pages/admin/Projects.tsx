@@ -214,7 +214,7 @@ export function ProjectsPage() {
     } else {
       // If we dropped on an issue, find its parent column
       for (const [status, issues] of Object.entries(groupedIssues)) {
-        if (issues.some((issue) => issue.id === over.id)) {
+        if (issues.some((issue: GitHubIssue) => issue.id === over.id)) {
           targetStatus = status
           break
         }
