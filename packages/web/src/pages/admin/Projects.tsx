@@ -907,12 +907,16 @@ function IssueCard({
                 ?.name.replace('status:', '') || 'open'
             }
             onChange={(e) => onStatusChange(e.target.value)}
-            className="text-xs px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="text-xs px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             disabled={isUpdating}
             onClick={(e) => e.stopPropagation()}
           >
             {ISSUE_STATUSES.map((status) => (
-              <option key={status.value} value={status.value}>
+              <option
+                key={status.value}
+                value={status.value}
+                className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              >
                 {status.label}
               </option>
             ))}
