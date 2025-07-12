@@ -19,8 +19,6 @@ import { AudioPlayer } from '@/components/AudioPlayer'
 import { CommentForm } from '@/components/CommentForm'
 import { IssueStatusSelector } from '@/components/IssueStatusSelector'
 import { ISSUE_STATUSES } from '@/constants/issueStatuses'
-import { useAdmin } from '@/contexts/AdminContext'
-import { cn } from '@/lib/utils'
 
 interface GitHubIssue {
   id: number
@@ -71,7 +69,6 @@ export function IssueDetailPage() {
   }>()
   const repository = owner && repo ? `${owner}/${repo}` : undefined
   const navigate = useNavigate()
-  const { isSuperAdmin } = useAdmin()
 
   const [issue, setIssue] = useState<GitHubIssue | null>(null)
   const [comments, setComments] = useState<IssueComment[]>([])
@@ -354,21 +351,28 @@ export function IssueDetailPage() {
         // Update issue state locally
         setIssue((prev) => {
           if (!prev) return prev
-          
+
           // Update labels - remove old status label and add new one
-          const newLabels = prev.labels.filter(l => !l.name.startsWith('status:'))
-          const statusLabel = ISSUE_STATUSES.find(s => s.value === newStatus)
-          
+          const newLabels = prev.labels.filter(
+            (l) => !l.name.startsWith('status:')
+          )
+          const statusLabel = ISSUE_STATUSES.find((s) => s.value === newStatus)
+
           if (statusLabel) {
             newLabels.push({
               id: Date.now(), // Temporary ID
               name: `status:${newStatus}`,
-              color: statusLabel.color === 'green' ? '0e7a0d' :
-                     statusLabel.color === 'blue' ? '0366d6' :
-                     statusLabel.color === 'yellow' ? 'fbca04' : '6f42c1',
+              color:
+                statusLabel.color === 'green'
+                  ? '0e7a0d'
+                  : statusLabel.color === 'blue'
+                    ? '0366d6'
+                    : statusLabel.color === 'yellow'
+                      ? 'fbca04'
+                      : '6f42c1',
             })
           }
-          
+
           return {
             ...prev,
             state: newStatus === 'done' ? 'closed' : 'open',
@@ -704,26 +708,19 @@ export function IssueDetailPage() {
                   <dd>
                     {(() => {
                       // Extract current status from labels
-                      const statusLabel = issue.labels.find(l => l.name.startsWith('status:'))
-                      const currentStatus = statusLabel ? statusLabel.name.replace('status:', '') : 'open'
-                      
-                      return isSuperAdmin ? (
+                      const statusLabel = issue.labels.find((l) =>
+                        l.name.startsWith('status:')
+                      )
+                      const currentStatus = statusLabel
+                        ? statusLabel.name.replace('status:', '')
+                        : 'open'
+
+                      return (
                         <IssueStatusSelector
                           currentStatus={currentStatus}
                           onStatusChange={handleStatusChange}
                           disabled={updatingStatus}
                         />
-                      ) : (
-                        <span
-                          className={cn(
-                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                            issue.state === 'open'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                              : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                          )}
-                        >
-                          {issue.state}
-                        </span>
                       )
                     })()}
                   </dd>

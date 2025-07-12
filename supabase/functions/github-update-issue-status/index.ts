@@ -9,10 +9,26 @@ interface UpdateStatusRequest {
 }
 
 const STATUS_LABELS = {
-  'open': { name: 'status:open', color: '0e7a0d', description: 'Issue is open and needs attention' },
-  'planned': { name: 'status:planned', color: '0366d6', description: 'Issue is planned for implementation' },
-  'in-progress': { name: 'status:in-progress', color: 'fbca04', description: 'Issue is currently being worked on' },
-  'done': { name: 'status:done', color: '6f42c1', description: 'Issue has been completed' },
+  open: {
+    name: 'status:open',
+    color: '0e7a0d',
+    description: 'Issue is open and needs attention',
+  },
+  planned: {
+    name: 'status:planned',
+    color: '0366d6',
+    description: 'Issue is planned for implementation',
+  },
+  'in-progress': {
+    name: 'status:in-progress',
+    color: 'fbca04',
+    description: 'Issue is currently being worked on',
+  },
+  done: {
+    name: 'status:done',
+    color: '6f42c1',
+    description: 'Issue has been completed',
+  },
 }
 
 serve(async (req) => {
@@ -52,28 +68,44 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    // Check if user is super admin
-    const { data: adminUser, error: adminError } = await supabaseClient
+    // Extract fields from request first to check permissions
+    const { repository, issueNumber, status } = request
+
+    // Check if user is admin
+    const { data: adminUser } = await supabaseClient
       .from('admin_users')
       .select('*')
       .eq('user_id', user.id)
-      .eq('role', 'super_admin')
       .eq('is_active', true)
       .maybeSingle()
 
-    if (adminError || !adminUser) {
-      throw new Error('Only super admins can change issue status')
+    // If not admin, check repository permissions
+    if (!adminUser) {
+      const { data: permission } = await supabaseClient
+        .from('repository_permissions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('repository_full_name', repository)
+        .eq('is_active', true)
+        .maybeSingle()
+
+      if (!permission) {
+        throw new Error(
+          `You don't have permission to change status in ${repository}`
+        )
+      }
     }
 
-    // Extract fields from request
-    const { repository, issueNumber, status } = request
-
     if (!repository || !issueNumber || !status) {
-      throw new Error('Missing required fields: repository, issueNumber, status')
+      throw new Error(
+        'Missing required fields: repository, issueNumber, status'
+      )
     }
 
     if (!STATUS_LABELS[status]) {
-      throw new Error('Invalid status. Must be one of: open, planned, in-progress, done')
+      throw new Error(
+        'Invalid status. Must be one of: open, planned, in-progress, done'
+      )
     }
 
     // Get repository details
@@ -107,23 +139,20 @@ serve(async (req) => {
     for (const [_statusKey, labelConfig] of Object.entries(STATUS_LABELS)) {
       try {
         // Try to create the label (will fail if it already exists, which is fine)
-        await fetch(
-          `https://api.github.com/repos/${owner}/${name}/labels`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `token ${decryptedToken}`,
-              Accept: 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-              'User-Agent': 'SpecifAI',
-            },
-            body: JSON.stringify({
-              name: labelConfig.name,
-              color: labelConfig.color,
-              description: labelConfig.description,
-            }),
-          }
-        )
+        await fetch(`https://api.github.com/repos/${owner}/${name}/labels`, {
+          method: 'POST',
+          headers: {
+            Authorization: `token ${decryptedToken}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'SpecifAI',
+          },
+          body: JSON.stringify({
+            name: labelConfig.name,
+            color: labelConfig.color,
+            description: labelConfig.description,
+          }),
+        })
       } catch {
         // Label already exists, that's fine
       }
@@ -146,12 +175,12 @@ serve(async (req) => {
     }
 
     const issue = await issueResponse.json()
-    
+
     // Filter out any existing status labels and add the new one
     const existingLabels = issue.labels
       .filter((label: { name: string }) => !label.name.startsWith('status:'))
       .map((label: { name: string }) => label.name)
-    
+
     const newLabels = [...existingLabels, STATUS_LABELS[status].name]
 
     // Update issue labels
@@ -192,7 +221,10 @@ serve(async (req) => {
       repository_full_name: repository,
       details: {
         issue_number: issueNumber,
-        old_status: existingLabels.find((l: string) => l.startsWith('status:'))?.replace('status:', '') || 'none',
+        old_status:
+          existingLabels
+            .find((l: string) => l.startsWith('status:'))
+            ?.replace('status:', '') || 'none',
         new_status: status,
         issue_state: updatedIssue.state,
       },
