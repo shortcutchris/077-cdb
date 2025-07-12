@@ -114,7 +114,7 @@ export function ProjectsPage() {
       for (const repo of repositories) {
         try {
           const response = await fetch(
-            `https://api.github.com/repos/${repo.repository_full_name}/issues?state=all&labels=status:open,status:planned,status:in-progress,status:done&per_page=100`,
+            `https://api.github.com/repos/${repo.repository_full_name}/issues?state=all&per_page=100`,
             {
               headers: {
                 Authorization: `token ${tokenData.encrypted_token}`,
@@ -156,14 +156,21 @@ export function ProjectsPage() {
         const statusLabel = issue.labels.find((label) =>
           label.name.startsWith('status:')
         )
+
+        // If no status label, default to 'open' for open issues and 'done' for closed issues
+        let status: keyof GroupedIssues = 'open'
+
         if (statusLabel) {
-          const status = statusLabel.name.replace(
+          status = statusLabel.name.replace(
             'status:',
             ''
           ) as keyof GroupedIssues
-          if (grouped[status]) {
-            grouped[status].push(issue)
-          }
+        } else if (issue.state === 'closed') {
+          status = 'done'
+        }
+
+        if (grouped[status]) {
+          grouped[status].push(issue)
         }
       })
 
