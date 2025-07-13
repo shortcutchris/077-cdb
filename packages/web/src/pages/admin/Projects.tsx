@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { AlertCircle, GitBranch, ChevronDown } from 'lucide-react'
+import { AlertCircle, GitBranch, ChevronDown, Plus } from 'lucide-react'
 import { ISSUE_STATUSES } from '@/constants/issueStatuses'
 import { cn } from '@/lib/utils'
+import { CreateIssueModal } from '@/components/CreateIssueModal'
 import {
   DndContext,
   DragOverlay,
@@ -65,6 +66,7 @@ export function ProjectsPage() {
   const [updatingIssue, setUpdatingIssue] = useState<number | null>(null)
   const [activeId, setActiveId] = useState<number | null>(null)
   const [selectedRepository, setSelectedRepository] = useState<string>('all')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -714,6 +716,11 @@ export function ProjectsPage() {
                         displayedIssues[status.value as keyof GroupedIssues]
                       }
                       updatingIssue={updatingIssue}
+                      onCreateIssue={
+                        status.value === 'open'
+                          ? () => setIsCreateModalOpen(true)
+                          : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -773,6 +780,22 @@ export function ProjectsPage() {
           </>
         )}
       </div>
+
+      {/* Create Issue Modal */}
+      <CreateIssueModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        initialRepository={
+          selectedRepository === 'all'
+            ? repositories.length > 0
+              ? repositories[0]
+              : ''
+            : selectedRepository
+        }
+        onIssueCreated={() => {
+          loadAllIssues()
+        }}
+      />
     </div>
   )
 }
@@ -781,12 +804,14 @@ interface DroppableColumnProps {
   status: (typeof ISSUE_STATUSES)[0]
   issues: GitHubIssue[]
   updatingIssue: number | null
+  onCreateIssue?: () => void
 }
 
 function DroppableColumn({
   status,
   issues,
   updatingIssue,
+  onCreateIssue,
 }: DroppableColumnProps) {
   const { setNodeRef, isOver, active } = useDroppable({
     id: `column-${status.value}`,
@@ -876,9 +901,20 @@ function DroppableColumn({
             <span className="opacity-75">{status.icon}</span>
             <h3 className="font-semibold text-lg">{status.label}</h3>
           </div>
-          <span className="text-sm font-medium bg-white/20 dark:bg-black/20 px-2 py-1 rounded-full">
-            {issues.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium bg-white/20 dark:bg-black/20 px-2 py-1 rounded-full">
+              {issues.length}
+            </span>
+            {onCreateIssue && (
+              <button
+                onClick={onCreateIssue}
+                className="p-1.5 rounded-full bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 transition-colors"
+                title="Create new issue"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
       <div
