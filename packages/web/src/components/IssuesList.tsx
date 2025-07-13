@@ -56,6 +56,7 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [myIssueNumbers, setMyIssueNumbers] = useState<number[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [showOnlyOpenForMine, setShowOnlyOpenForMine] = useState(true) // Default to showing only open issues for "mine"
 
   useEffect(() => {
     if (repository) {
@@ -67,7 +68,7 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
   useEffect(() => {
     filterIssues()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [issues, filter, myIssueNumbers, searchQuery])
+  }, [issues, filter, myIssueNumbers, searchQuery, showOnlyOpenForMine])
 
   // React to reload trigger changes
   useEffect(() => {
@@ -224,6 +225,11 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
         }
         return false
       })
+
+      // Apply additional open/closed filter for "mine"
+      if (showOnlyOpenForMine) {
+        filtered = filtered.filter((issue) => issue.state === 'open')
+      }
     }
 
     // Apply search filter
@@ -421,14 +427,25 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
                     user?.user_metadata?.preferred_username
 
                   // Count issues created by user (hybrid approach)
-                  return issues.filter((issue) => {
+                  const myIssues = issues.filter((issue) => {
                     // Check Supabase history
                     if (myIssueNumbers.includes(issue.number)) return true
                     // Check GitHub username
                     if (githubUsername && issue.user.login === githubUsername)
                       return true
                     return false
-                  }).length
+                  })
+
+                  // If filter is active and toggle is on, show open count
+                  if (filter === 'mine' && showOnlyOpenForMine) {
+                    const openCount = myIssues.filter(
+                      (i) => i.state === 'open'
+                    ).length
+                    const totalCount = myIssues.length
+                    return `${openCount}/${totalCount}`
+                  }
+
+                  return myIssues.length
                 })()}
                 )
               </span>
@@ -442,6 +459,23 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
           </div>
         )}
       </div>
+
+      {/* Status Toggle for "My Issues" */}
+      {filter === 'mine' && (
+        <div className="px-4 sm:px-6 py-2 border-t border-gray-200 dark:border-gray-700">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showOnlyOpenForMine}
+              onChange={(e) => setShowOnlyOpenForMine(e.target.checked)}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Nur offene Issues anzeigen
+            </span>
+          </label>
+        </div>
+      )}
 
       {/* Issues List - Scrollable Container */}
       <div className="flex-1 overflow-y-auto space-y-3">
