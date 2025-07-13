@@ -793,7 +793,10 @@ export function ProjectsPage() {
             : selectedRepository
         }
         onIssueCreated={() => {
-          loadAllIssues()
+          // Wait a bit for GitHub to process the new issue
+          setTimeout(() => {
+            loadAllIssues()
+          }, 1500)
         }}
       />
     </div>
