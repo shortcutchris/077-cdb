@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
@@ -64,6 +64,7 @@ export function ProjectsPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [updatingIssue, setUpdatingIssue] = useState<number | null>(null)
   const [activeId, setActiveId] = useState<number | null>(null)
+  const [selectedRepository, setSelectedRepository] = useState<string>('all')
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -472,6 +473,50 @@ export function ProjectsPage() {
     }
   }
 
+  // Extract unique repositories from all issues
+  const repositories = useMemo(() => {
+    const repoSet = new Set<string>()
+    Object.values(groupedIssues)
+      .flat()
+      .forEach((issue) => {
+        if (issue.repository?.full_name) {
+          repoSet.add(issue.repository.full_name)
+        }
+      })
+    return Array.from(repoSet).sort()
+  }, [groupedIssues])
+
+  // Filter issues based on selected repository
+  const displayedIssues = useMemo(() => {
+    if (selectedRepository === 'all') return groupedIssues
+
+    return {
+      open: groupedIssues.open.filter(
+        (i) => i.repository?.full_name === selectedRepository
+      ),
+      planned: groupedIssues.planned.filter(
+        (i) => i.repository?.full_name === selectedRepository
+      ),
+      'in-progress': groupedIssues['in-progress'].filter(
+        (i) => i.repository?.full_name === selectedRepository
+      ),
+      done: groupedIssues.done.filter(
+        (i) => i.repository?.full_name === selectedRepository
+      ),
+    }
+  }, [groupedIssues, selectedRepository])
+
+  const totalIssues = Object.values(groupedIssues).reduce(
+    (sum, issues) => sum + issues.length,
+    0
+  )
+
+  // Count issues for current view
+  const displayedIssuesCount = Object.values(displayedIssues).reduce(
+    (sum, issues) => sum + issues.length,
+    0
+  )
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -492,24 +537,65 @@ export function ProjectsPage() {
     )
   }
 
-  const totalIssues = Object.values(groupedIssues).reduce(
-    (sum, issues) => sum + issues.length,
-    0
-  )
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Projects Overview
-          </h1>
-          <p className="mt-2 text-base text-gray-600 dark:text-gray-400">
-            Manage all issues across your repositories
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Projects Overview
+              </h1>
+              <p className="mt-2 text-base text-gray-600 dark:text-gray-400">
+                Manage all issues across your repositories
+              </p>
+            </div>
+            {repositories.length > 0 && (
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="repo-filter"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Repository:
+                </label>
+                <select
+                  id="repo-filter"
+                  value={selectedRepository}
+                  onChange={(e) => setSelectedRepository(e.target.value)}
+                  className="px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                >
+                  <option value="all">Alle Repositories ({totalIssues})</option>
+                  {repositories.map((repo) => {
+                    const repoIssueCount = Object.values(groupedIssues)
+                      .flat()
+                      .filter(
+                        (issue) => issue.repository?.full_name === repo
+                      ).length
+                    return (
+                      <option key={repo} value={repo}>
+                        {repo} ({repoIssueCount})
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
 
-        {totalIssues === 0 ? (
+        {displayedIssuesCount === 0 && selectedRepository !== 'all' ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+            <div className="max-w-md mx-auto">
+              <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                No issues in {selectedRepository}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                This repository doesn&apos;t have any issues yet.
+              </p>
+            </div>
+          </div>
+        ) : totalIssues === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
             <div className="max-w-md mx-auto">
               <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
@@ -554,7 +640,7 @@ export function ProjectsPage() {
                     </span>
                     <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                       {
-                        groupedIssues[selectedStatus as keyof GroupedIssues]
+                        displayedIssues[selectedStatus as keyof GroupedIssues]
                           .length
                       }
                     </span>
@@ -595,8 +681,9 @@ export function ProjectsPage() {
                           </div>
                           <span className="text-sm text-gray-500 dark:text-gray-400">
                             {
-                              groupedIssues[status.value as keyof GroupedIssues]
-                                .length
+                              displayedIssues[
+                                status.value as keyof GroupedIssues
+                              ].length
                             }
                           </span>
                         </button>
@@ -624,7 +711,7 @@ export function ProjectsPage() {
                       key={status.value}
                       status={status}
                       issues={
-                        groupedIssues[status.value as keyof GroupedIssues]
+                        displayedIssues[status.value as keyof GroupedIssues]
                       }
                       updatingIssue={updatingIssue}
                     />
@@ -637,7 +724,7 @@ export function ProjectsPage() {
                     <div className="transform rotate-2 opacity-95">
                       <IssueCard
                         issue={
-                          Object.values(groupedIssues)
+                          Object.values(displayedIssues)
                             .flat()
                             .find((i) => i.id === activeId)!
                         }
@@ -652,7 +739,7 @@ export function ProjectsPage() {
 
             {/* Mobile List View */}
             <div className="md:hidden space-y-3">
-              {groupedIssues[selectedStatus as keyof GroupedIssues].length ===
+              {displayedIssues[selectedStatus as keyof GroupedIssues].length ===
               0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-12 text-center">
                   <p className="text-gray-500 dark:text-gray-400 font-medium">
@@ -663,7 +750,7 @@ export function ProjectsPage() {
                   </p>
                 </div>
               ) : (
-                groupedIssues[selectedStatus as keyof GroupedIssues].map(
+                displayedIssues[selectedStatus as keyof GroupedIssues].map(
                   (issue) => (
                     <IssueCard
                       key={issue.id}
