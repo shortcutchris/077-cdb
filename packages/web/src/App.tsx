@@ -24,6 +24,7 @@ import { AdminUsers } from '@/pages/admin/Users'
 import { AdminPermissionsSplitView } from '@/pages/admin/PermissionsSplitView'
 import { AdminAuditLog } from '@/pages/admin/AuditLog'
 import { ProjectsPage } from '@/pages/admin/Projects'
+import { UserProjectsPage } from '@/pages/UserProjectsPage'
 
 function App() {
   const { loading } = useAuth()
@@ -55,6 +56,7 @@ function App() {
         }
       >
         <Route index element={<HomePage />} />
+        <Route path="projects" element={<UserProjectsPage />} />
         <Route
           path="issue/:owner/:repo/:issueNumber"
           element={<IssueDetailPage />}
