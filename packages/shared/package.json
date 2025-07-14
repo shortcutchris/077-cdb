@@ -11,8 +11,10 @@
     "typecheck": "npx tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "devDependencies": {
-    "@types/node": "^20.11.0",
+  "dependencies": {
     "typescript": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0"
   }
 }
