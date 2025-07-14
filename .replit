@@ -5,7 +5,9 @@ run = "npm run dev"
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "npm run dev"]
+run = ["sh", "-c", "npm run start"]
+build = ["sh", "-c", "npm run build"]
+deploymentTarget = "cloudrun"
 
 [workflows]
 runButton = "Development"
@@ -77,3 +79,7 @@ args = "npm run format"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run typecheck"
+
+[[ports]]
+localPort = 5174
+externalPort = 80
