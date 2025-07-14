@@ -15,6 +15,7 @@ import { DebugPage } from '@/pages/DebugPage'
 import { SetupGuidePage } from '@/pages/SetupGuidePage'
 import { TestPage } from '@/pages/TestPage'
 import { IssueDetailPage } from '@/pages/IssueDetailPage'
+import { UserProjectsPage } from '@/pages/UserProjectsPage'
 
 // Admin Pages
 import { AdminDashboard } from '@/pages/admin/Dashboard'
@@ -59,6 +60,7 @@ function App() {
           path="issue/:owner/:repo/:issueNumber"
           element={<IssueDetailPage />}
         />
+        <Route path="projects" element={<UserProjectsPage />} />
       </Route>
 
       {/* Admin routes */}
