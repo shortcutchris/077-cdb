@@ -3,13 +3,13 @@
 hidden = [".git", "node_modules", ".env", ".env.local", ".cache", "dist", ".vite"]
 
 # Development run command
-run = "npm run start"
+run = "npm run start:dev"
 
 # Production deployment configuration
 [deployment]
-build = ["sh", "-c", "npm install -g pnpm@8 && pnpm install --frozen-lockfile && npm run build:replit"]
+build = ["sh", "-c", "npm ci --prefer-offline --no-audit && npm run build"]
 run = ["sh", "-c", "npm run start"]
-deploymentTarget = "cloudrun"
+deploymentTarget = "static"
 
 [nix]
 channel = "stable-24_05"
@@ -23,10 +23,14 @@ HUSKY = "0"
 localPort = 3000
 externalPort = 80
 
+[[ports]]
+localPort = 5174
+externalPort = 5174
+
 [packager]
 language = "nodejs-npm"
 
 [packager.features]
 packageSearch = true
 guessImports = true
-enabledForHosting = false
+enabledForHosting = true

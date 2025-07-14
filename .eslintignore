@@ -1,0 +1,19 @@
+# Build outputs
+dist/
+build/
+*.min.js
+
+# Dependencies
+node_modules/
+
+# Server files
+server.js
+
+# Config files
+vite.config.ts
+*.config.js
+*.config.ts
+
+# Generated files
+public/sw.js
+public/workbox-*.js

@@ -3,17 +3,31 @@
   "version": "0.0.1",
   "private": true,
   "description": "Voice-to-GitHub-Issue Platform",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "pnpm --parallel --recursive run dev",
-    "dev:web": "pnpm --filter web run dev",
-    "build": "pnpm --recursive run build",
-    "build:replit": "cd packages/web && pnpm run build",
-    "start": "cd packages/web && pnpm run preview --host 0.0.0.0 --port 3000",
-    "preview": "cd packages/web && pnpm run preview",
-    "test": "pnpm --recursive run test",
-    "lint": "pnpm --recursive run lint",
+    "dev": "npm run dev -w web",
+    "dev:web": "npm run dev -w web",
+    "build": "npm run build:shared && npm run build -w web",
+    "build:shared": "npm run build -w @specifai/shared",
+    "build:replit": "npm run build",
+    "start": "node server.js",
+    "start:serve": "npx serve packages/web/dist -p 3000 -s --no-clipboard",
+    "start:dev": "npm run dev",
+    "preview": "npm run preview -w web",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "prepare": "node -e \"if(process.env.HUSKY === '0' || process.env.NODE_ENV === 'production') process.exit(0)\" || husky install"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "prepare": "node -e \"if(process.env.HUSKY === '0' || process.env.NODE_ENV === 'production') process.exit(0)\" || husky install",
+    "replit:install": "npm ci --prefer-offline --no-audit",
+    "replit:build": "npm run build",
+    "replit:start": "npm run start"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "compression": "^1.7.4"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
@@ -25,7 +39,8 @@
     "husky": "^9.0.11",
     "lint-staged": "^15.2.0",
     "prettier": "^3.2.5",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "serve": "^14.2.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -38,6 +53,6 @@
   },
   "engines": {
     "node": ">=20.0.0",
-    "pnpm": ">=8.0.0"
+    "npm": ">=10.0.0"
   }
 }
