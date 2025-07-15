@@ -61,9 +61,9 @@ interface ProjectsPageContentProps {
   userView?: boolean
 }
 
-export function ProjectsPageContent({ 
-  isReadOnly = false, 
-  userView = false 
+export function ProjectsPageContent({
+  isReadOnly = false,
+  userView = false,
 }: ProjectsPageContentProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -148,15 +148,15 @@ export function ProjectsPageContent({
 
       if (userView) {
         // For normal users, load only their assigned issues
-        const { data: userGitHub } = await supabase
-          .from('github_users')
-          .select('github_username')
-          .eq('user_id', user?.id)
-          .single()
+        // Get GitHub username from auth metadata
+        const { data: userData } = await supabase.auth.getUser()
+        const githubUsername =
+          userData?.user?.user_metadata?.user_name ||
+          userData?.user?.user_metadata?.preferred_username
 
-        if (!userGitHub?.github_username) {
+        if (!githubUsername) {
           setLoading(false)
-          setError('GitHub username not found. Please contact an administrator.')
+          setError('GitHub username not found. Please sign in with GitHub.')
           return
         }
 
@@ -190,7 +190,7 @@ export function ProjectsPageContent({
           try {
             // GitHub API supports filtering by assignee
             const response = await fetch(
-              `https://api.github.com/repos/${repo.repository_full_name}/issues?state=all&assignee=${userGitHub.github_username}&per_page=100`,
+              `https://api.github.com/repos/${repo.repository_full_name}/issues?state=all&assignee=${githubUsername}&per_page=100`,
               {
                 headers: {
                   Authorization: `token ${tokenData.encrypted_token}`,
@@ -359,7 +359,7 @@ export function ProjectsPageContent({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     if (isReadOnly) return
-    
+
     const { active, over } = event
     setActiveId(null)
 
@@ -491,7 +491,7 @@ export function ProjectsPageContent({
     updateUI: boolean = true
   ) => {
     if (isReadOnly) return
-    
+
     console.log('Updating issue status:', {
       issueId,
       repository,
@@ -666,8 +666,8 @@ export function ProjectsPageContent({
   }
 
   const pageTitle = userView ? 'My Projects' : 'Projects Overview'
-  const pageDescription = userView 
-    ? 'View your assigned issues across all repositories' 
+  const pageDescription = userView
+    ? 'View your assigned issues across all repositories'
     : 'Manage all issues across your repositories'
 
   const renderContent = () => {
@@ -746,9 +746,8 @@ export function ProjectsPageContent({
                         </div>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
                           {
-                            displayedIssues[
-                              status.value as keyof GroupedIssues
-                            ].length
+                            displayedIssues[status.value as keyof GroupedIssues]
+                              .length
                           }
                         </span>
                       </button>
@@ -769,9 +768,7 @@ export function ProjectsPageContent({
                 <ReadOnlyColumn
                   key={status.value}
                   status={status}
-                  issues={
-                    displayedIssues[status.value as keyof GroupedIssues]
-                  }
+                  issues={displayedIssues[status.value as keyof GroupedIssues]}
                 />
               ))}
             </div>
@@ -826,10 +823,7 @@ export function ProjectsPageContent({
                     )
                   )}
                 >
-                  {
-                    ISSUE_STATUSES.find((s) => s.value === selectedStatus)
-                      ?.icon
-                  }
+                  {ISSUE_STATUSES.find((s) => s.value === selectedStatus)?.icon}
                 </span>
                 <span className="font-semibold text-gray-900 dark:text-white">
                   {
@@ -880,9 +874,8 @@ export function ProjectsPageContent({
                       </div>
                       <span className="text-sm text-gray-500 dark:text-gray-400">
                         {
-                          displayedIssues[
-                            status.value as keyof GroupedIssues
-                          ].length
+                          displayedIssues[status.value as keyof GroupedIssues]
+                            .length
                         }
                       </span>
                     </button>
@@ -909,9 +902,7 @@ export function ProjectsPageContent({
                 <DroppableColumn
                   key={status.value}
                   status={status}
-                  issues={
-                    displayedIssues[status.value as keyof GroupedIssues]
-                  }
+                  issues={displayedIssues[status.value as keyof GroupedIssues]}
                   updatingIssue={updatingIssue}
                   onCreateIssue={
                     status.value === 'open'
@@ -1032,7 +1023,7 @@ export function ProjectsPageContent({
                 No issues in {selectedRepository}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                {userView 
+                {userView
                   ? "You don't have any assigned issues in this repository."
                   : "This repository doesn't have any issues yet."}
               </p>
@@ -1046,7 +1037,7 @@ export function ProjectsPageContent({
                 No issues found
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                {userView 
+                {userView
                   ? "You don't have any assigned issues yet."
                   : "Your repositories don't have any issues yet. Create your first issue to see it here."}
               </p>
@@ -1134,11 +1125,7 @@ function ReadOnlyColumn({ status, issues }: ReadOnlyColumnProps) {
         ) : (
           <div className="space-y-3">
             {issues.map((issue) => (
-              <IssueCard
-                key={issue.id}
-                issue={issue}
-                isUpdating={false}
-              />
+              <IssueCard key={issue.id} issue={issue} isUpdating={false} />
             ))}
           </div>
         )}
