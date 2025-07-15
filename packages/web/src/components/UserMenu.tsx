@@ -96,15 +96,17 @@ export function UserMenu() {
               </a>
             )}
 
-            {/* Projects Link - Show for all users */}
-            <Link
-              to="/projects"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full text-left rounded-md"
-            >
-              <FolderKanban className="w-4 h-4" />
-              <span>My Projects</span>
-            </Link>
+            {/* Projects Link - Only show for non-admin users */}
+            {adminLoading === false && isAdmin === false && (
+              <Link
+                to="/projects"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full text-left rounded-md"
+              >
+                <FolderKanban className="w-4 h-4" />
+                <span>My Projects</span>
+              </Link>
+            )}
 
             {/* Admin Dashboard Link - Only show when confirmed admin */}
             {adminLoading === false && isAdmin === true && (

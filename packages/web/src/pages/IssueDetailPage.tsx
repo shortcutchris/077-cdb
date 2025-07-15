@@ -15,9 +15,11 @@ import {
 import { formatDistanceToNow, format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { cn } from '@/lib/utils'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { CommentForm } from '@/components/CommentForm'
 import { IssueStatusSelector } from '@/components/IssueStatusSelector'
+import { StatusUpdateModal } from '@/components/StatusUpdateModal'
 import { ISSUE_STATUSES } from '@/constants/issueStatuses'
 
 interface GitHubIssue {
@@ -56,6 +58,7 @@ interface IssueComment {
 interface IssueHistoryData {
   created_by: string
   created_at: string
+  creator_email?: string
   // Audio data might come from a different source for voice-created issues
   audio_url?: string | null
   transcription?: string | null
@@ -92,6 +95,15 @@ export function IssueDetailPage() {
       avatar_url?: string
     }
   } | null>(null)
+  const [canEditIssue, setCanEditIssue] = useState(false)
+  const [statusUpdateModal, setStatusUpdateModal] = useState<{
+    isOpen: boolean
+    status: 'loading' | 'success' | 'error'
+    message?: string
+  }>({
+    isOpen: false,
+    status: 'loading',
+  })
 
   useEffect(() => {
     if (repository && issueNumber) {
@@ -202,7 +214,7 @@ export function IssueDetailPage() {
 
         if (!isNaN(issueNum)) {
           const { data: history, error: historyError } = await supabase
-            .from('issues_history')
+            .from('issues_with_creator')
             .select('*')
             .eq('repository_full_name', repository)
             .eq('issue_number', issueNum)
@@ -215,6 +227,17 @@ export function IssueDetailPage() {
             }
           } else if (history) {
             setHistoryData(history)
+
+            // Check if user can edit this issue
+            // Only admins can edit issues - normal users can only view
+            const canEdit = !!adminUser // Only admins can edit
+
+            setCanEditIssue(canEdit)
+          } else {
+            // No history data - only admins can edit
+            const canEdit = !!adminUser // Only admins can edit
+
+            setCanEditIssue(canEdit)
           }
         }
       } catch {
@@ -332,14 +355,13 @@ export function IssueDetailPage() {
   const handleStatusChange = async (newStatus: string) => {
     if (!repository || !issueNumber) return
 
-    console.log(
-      'Changing status to:',
-      newStatus,
-      'for',
-      repository,
-      issueNumber
-    )
     setUpdatingStatus(true)
+    setStatusUpdateModal({
+      isOpen: true,
+      status: 'loading',
+      message: 'Updating issue status on GitHub...',
+    })
+
     try {
       const { data, error } = await supabase.functions.invoke(
         'github-update-issue-status',
@@ -352,8 +374,25 @@ export function IssueDetailPage() {
         }
       )
 
-      console.log('Edge function response:', { data, error })
       if (error) throw error
+      if (!data?.success) throw new Error('Failed to update issue status')
+
+      // Wait for GitHub to process
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+
+      setStatusUpdateModal({
+        isOpen: true,
+        status: 'loading',
+        message: 'Verifying status update...',
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      setStatusUpdateModal({
+        isOpen: true,
+        status: 'success',
+        message: 'Issue status updated successfully!',
+      })
 
       if (data?.success) {
         // Update issue state locally
@@ -392,11 +431,12 @@ export function IssueDetailPage() {
       }
     } catch (err) {
       console.error('Error updating status:', err)
-      if (err instanceof Error) {
-        alert(`Failed to update issue status: ${err.message}`)
-      } else {
-        alert('Failed to update issue status')
-      }
+      setStatusUpdateModal({
+        isOpen: true,
+        status: 'error',
+        message:
+          err instanceof Error ? err.message : 'Failed to update issue status',
+      })
     } finally {
       setUpdatingStatus(false)
     }
@@ -548,7 +588,11 @@ export function IssueDetailPage() {
                     alt={issue.user.login}
                     className="h-5 w-5 rounded-full"
                   />
-                  <span>{issue.user.login}</span>
+                  <span>
+                    {historyData?.created_by && historyData?.creator_email
+                      ? historyData.creator_email
+                      : issue.user.login}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4" />
@@ -727,17 +771,36 @@ export function IssueDetailPage() {
                         ? statusLabel.name.replace('status:', '')
                         : 'open'
 
-                      console.log(
-                        'Rendering status selector with:',
-                        currentStatus
-                      )
-
-                      return (
+                      return canEditIssue ? (
                         <IssueStatusSelector
                           currentStatus={currentStatus}
                           onStatusChange={handleStatusChange}
                           disabled={updatingStatus}
                         />
+                      ) : (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2',
+                            currentStatus === 'done'
+                              ? 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700'
+                              : currentStatus === 'in-progress'
+                                ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                                : currentStatus === 'todo'
+                                  ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700'
+                                  : 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                          )}
+                        >
+                          {
+                            ISSUE_STATUSES.find(
+                              (s) => s.value === currentStatus
+                            )?.icon
+                          }
+                          <span className="text-sm font-medium">
+                            {ISSUE_STATUSES.find(
+                              (s) => s.value === currentStatus
+                            )?.label || 'Open'}
+                          </span>
+                        </span>
                       )
                     })()}
                   </dd>
@@ -772,11 +835,36 @@ export function IssueDetailPage() {
                     </dd>
                   </div>
                 )}
+                {!canEditIssue && (
+                  <div>
+                    <dt className="text-sm text-gray-500 dark:text-gray-400">
+                      Permissions
+                    </dt>
+                    <dd className="mt-1">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                        View only
+                      </span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Only the issue creator or admins can edit
+                      </p>
+                    </dd>
+                  </div>
+                )}
               </dl>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Status Update Modal */}
+      <StatusUpdateModal
+        isOpen={statusUpdateModal.isOpen}
+        status={statusUpdateModal.status}
+        message={statusUpdateModal.message}
+        onClose={() =>
+          setStatusUpdateModal({ isOpen: false, status: 'loading' })
+        }
+      />
     </div>
   )
 }

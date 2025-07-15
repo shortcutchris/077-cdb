@@ -6,6 +6,7 @@ import { AlertCircle, GitBranch, ChevronDown, Plus } from 'lucide-react'
 import { ISSUE_STATUSES } from '@/constants/issueStatuses'
 import { cn } from '@/lib/utils'
 import { CreateIssueModal } from '@/components/CreateIssueModal'
+import { StatusUpdateModal } from '@/components/StatusUpdateModal'
 import {
   DndContext,
   DragOverlay,
@@ -48,6 +49,8 @@ interface GitHubIssue {
     login: string
   }>
   isCreatedByUser?: boolean
+  creatorEmail?: string
+  creatorName?: string
 }
 
 interface GroupedIssues {
@@ -82,6 +85,14 @@ export function ProjectsPageContent({
   const [selectedRepository, setSelectedRepository] = useState<string>('all')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [issueFilter, setIssueFilter] = useState<'all' | 'mine'>('all')
+  const [statusUpdateModal, setStatusUpdateModal] = useState<{
+    isOpen: boolean
+    status: 'loading' | 'success' | 'error'
+    message?: string
+  }>({
+    isOpen: false,
+    status: 'loading',
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -204,17 +215,29 @@ export function ProjectsPageContent({
           throw new Error('No active GitHub token available')
         }
 
-        // Get issues created by this user
-        const { data: userCreated } = await supabase
-          .from('issues_history')
-          .select('repository_full_name, issue_number')
-          .eq('created_by', user.id)
+        // Get issues with creator information
+        const { data: issuesWithCreators } = await supabase
+          .from('issues_with_creator')
+          .select(
+            'repository_full_name, issue_number, creator_email, creator_name, created_by'
+          )
+          .in('repository_full_name', permittedRepoNames)
 
-        // Create a Set for quick lookup
+        // Create maps for quick lookup
         const createdByUser = new Set(
-          userCreated?.map(
-            (i) => `${i.repository_full_name}#${i.issue_number}`
-          ) || []
+          issuesWithCreators
+            ?.filter((i) => i.created_by === user.id)
+            .map((i) => `${i.repository_full_name}#${i.issue_number}`) || []
+        )
+
+        const creatorInfo = new Map(
+          issuesWithCreators?.map((i) => [
+            `${i.repository_full_name}#${i.issue_number}`,
+            {
+              email: i.creator_email,
+              name: i.creator_name,
+            },
+          ]) || []
         )
 
         // Fetch issues for each repository
@@ -235,18 +258,22 @@ export function ProjectsPageContent({
 
             if (response.ok) {
               const issues = await response.json()
-              // Add repository info and created-by-user flag to each issue
-              const issuesWithRepo = issues.map((issue: GitHubIssue) => ({
-                ...issue,
-                repository: {
-                  full_name: repo.repository_full_name,
-                  name: repo.name,
-                  owner: repo.owner,
-                },
-                isCreatedByUser: createdByUser.has(
-                  `${repo.repository_full_name}#${issue.number}`
-                ),
-              }))
+              // Add repository info, created-by-user flag, and creator info to each issue
+              const issuesWithRepo = issues.map((issue: GitHubIssue) => {
+                const issueKey = `${repo.repository_full_name}#${issue.number}`
+                const creator = creatorInfo.get(issueKey)
+                return {
+                  ...issue,
+                  repository: {
+                    full_name: repo.repository_full_name,
+                    name: repo.name,
+                    owner: repo.owner,
+                  },
+                  isCreatedByUser: createdByUser.has(issueKey),
+                  creatorEmail: creator?.email,
+                  creatorName: creator?.name,
+                }
+              })
               allIssues.push(...issuesWithRepo)
             }
           } catch (err) {
@@ -541,7 +568,14 @@ export function ProjectsPageContent({
     if (isReadOnly) return
 
     setUpdatingIssue(issueId)
+    setStatusUpdateModal({
+      isOpen: true,
+      status: 'loading',
+      message: 'Updating issue status on GitHub...',
+    })
+
     try {
+      // Step 1: Update via Edge Function
       const { data } = await supabase.functions.invoke(
         'github-update-issue-status',
         {
@@ -554,6 +588,26 @@ export function ProjectsPageContent({
       )
 
       if (!data?.success) throw new Error('Failed to update issue status')
+
+      // Step 2: Wait a bit for GitHub to process
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+
+      // Step 3: Verify the update
+      setStatusUpdateModal({
+        isOpen: true,
+        status: 'loading',
+        message: 'Verifying status update...',
+      })
+
+      // Wait a bit more to ensure GitHub has processed the change
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Show success
+      setStatusUpdateModal({
+        isOpen: true,
+        status: 'success',
+        message: 'Issue status updated successfully!',
+      })
 
       if (data?.success && updateUI) {
         // Only update UI if requested (not for drag & drop)
@@ -601,13 +655,12 @@ export function ProjectsPageContent({
       }
     } catch (err) {
       console.error('Error updating status:', err)
-      // Mehr Details für Debugging
-      if (err instanceof Error) {
-        console.error('Error details:', err.message)
-        alert(`Failed to update issue status: ${err.message}`)
-      } else {
-        alert('Failed to update issue status')
-      }
+      setStatusUpdateModal({
+        isOpen: true,
+        status: 'error',
+        message:
+          err instanceof Error ? err.message : 'Failed to update issue status',
+      })
       // Issue-Liste neu laden bei Fehler
       await loadAllIssues()
     } finally {
@@ -1166,6 +1219,16 @@ export function ProjectsPageContent({
           }
         </div>
       </div>
+
+      {/* Status Update Modal */}
+      <StatusUpdateModal
+        isOpen={statusUpdateModal.isOpen}
+        status={statusUpdateModal.status}
+        message={statusUpdateModal.message}
+        onClose={() =>
+          setStatusUpdateModal({ isOpen: false, status: 'loading' })
+        }
+      />
     </div>
   )
 }
@@ -1471,12 +1534,16 @@ function IssueCard({
             >
               {issue.title}
             </Link>
-            {issue.isCreatedByUser && (
+            {issue.creatorEmail && (
               <span
                 className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 whitespace-nowrap"
-                title="Von dir erstellt"
+                title={
+                  issue.isCreatedByUser
+                    ? 'Von dir erstellt'
+                    : `Erstellt von ${issue.creatorEmail}`
+                }
               >
-                My Issue
+                {issue.isCreatedByUser ? 'My Issue' : issue.creatorEmail}
               </span>
             )}
           </div>

@@ -37,6 +37,7 @@ interface GitHubIssue {
     color: string
   }>
   pull_request?: object
+  creatorEmail?: string
 }
 
 interface IssuesListProps {
@@ -181,16 +182,35 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
         setIssues(issuesOnly)
       }
 
-      // Load user's created issues from Supabase
+      // Load issues with creator information from Supabase
       if (user) {
-        const { data: userIssues, error: historyError } = await supabase
-          .from('issues_history')
-          .select('issue_number')
+        const { data: issuesWithCreators, error: historyError } = await supabase
+          .from('issues_with_creator')
+          .select('issue_number, creator_email, created_by')
           .eq('repository_full_name', repository)
-          .eq('created_by', user.id)
 
-        if (!historyError && userIssues) {
-          setMyIssueNumbers(userIssues.map((item) => item.issue_number))
+        if (!historyError && issuesWithCreators) {
+          // Get user's own issues
+          setMyIssueNumbers(
+            issuesWithCreators
+              .filter((item) => item.created_by === user.id)
+              .map((item) => item.issue_number)
+          )
+
+          // Add creator info to issues
+          const creatorMap = new Map(
+            issuesWithCreators.map((item) => [
+              item.issue_number,
+              item.creator_email,
+            ])
+          )
+
+          setIssues((prevIssues) =>
+            prevIssues.map((issue) => ({
+              ...issue,
+              creatorEmail: creatorMap.get(issue.number),
+            }))
+          )
         }
       }
     } catch (err) {
@@ -547,7 +567,7 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
                         {formatDistanceToNow(new Date(issue.created_at))} ago
                       </span>
                       <span className="hidden sm:inline">
-                        by {issue.user.login}
+                        by {issue.creatorEmail || issue.user.login}
                       </span>
                     </div>
                   </div>
