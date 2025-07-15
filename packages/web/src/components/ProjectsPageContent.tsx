@@ -138,6 +138,7 @@ export function ProjectsPageContent({
   }
 
   useEffect(() => {
+    if (!user) return // Don't load if user is not available yet
     loadAllIssues()
   }, [userView, user])
 
@@ -146,9 +147,12 @@ export function ProjectsPageContent({
       setLoading(true)
       setError(null)
 
-      if (userView) {
+      if (userView && user) {
         // For normal users, load only their assigned issues
         // Get GitHub username from auth metadata
+        console.log('User object:', user)
+        console.log('User metadata:', user?.user_metadata)
+
         const githubUsername =
           user?.user_metadata?.user_name ||
           user?.user_metadata?.preferred_username
@@ -158,6 +162,8 @@ export function ProjectsPageContent({
           setError('GitHub username not found. Please sign in with GitHub.')
           return
         }
+
+        console.log('GitHub username found:', githubUsername)
 
         // Get all managed repositories
         const { data: repositories, error: repoError } = await supabase
@@ -250,7 +256,7 @@ export function ProjectsPageContent({
         })
 
         setGroupedIssues(grouped)
-      } else {
+      } else if (!userView) {
         // Admin view - load all issues
         // Get all managed repositories
         const { data: repositories, error: repoError } = await supabase

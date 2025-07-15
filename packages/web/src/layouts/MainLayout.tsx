@@ -1,15 +1,12 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { UserMenu } from '@/components/UserMenu'
-import { Home, FolderKanban } from 'lucide-react'
+import { Home } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function MainLayout() {
   const location = useLocation()
 
-  const navigation = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'Projects', href: '/projects', icon: FolderKanban },
-  ]
+  const navigation = [{ name: 'Home', href: '/', icon: Home }]
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -23,7 +20,7 @@ export function MainLayout() {
               >
                 SpecifAI
               </Link>
-              
+
               {/* Navigation Menu */}
               <nav className="hidden md:flex space-x-1">
                 {navigation.map((item) => {
@@ -46,12 +43,12 @@ export function MainLayout() {
                 })}
               </nav>
             </div>
-            
+
             <div className="flex items-center space-x-2 lg:space-x-4">
               <UserMenu />
             </div>
           </div>
-          
+
           {/* Mobile Navigation */}
           <nav className="md:hidden flex space-x-1 pb-3">
             {navigation.map((item) => {
