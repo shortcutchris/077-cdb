@@ -149,10 +149,9 @@ export function ProjectsPageContent({
       if (userView) {
         // For normal users, load only their assigned issues
         // Get GitHub username from auth metadata
-        const { data: userData } = await supabase.auth.getUser()
         const githubUsername =
-          userData?.user?.user_metadata?.user_name ||
-          userData?.user?.user_metadata?.preferred_username
+          user?.user_metadata?.user_name ||
+          user?.user_metadata?.preferred_username
 
         if (!githubUsername) {
           setLoading(false)
