@@ -47,6 +47,7 @@ interface GitHubIssue {
   assignees?: Array<{
     login: string
   }>
+  isCreatedByUser?: boolean
 }
 
 interface GroupedIssues {
@@ -80,6 +81,7 @@ export function ProjectsPageContent({
   const [activeId, setActiveId] = useState<number | null>(null)
   const [selectedRepository, setSelectedRepository] = useState<string>('all')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [issueFilter, setIssueFilter] = useState<'all' | 'mine'>('all')
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -140,6 +142,7 @@ export function ProjectsPageContent({
   useEffect(() => {
     if (!user) return // Don't load if user is not available yet
     loadAllIssues()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userView, user])
 
   const loadAllIssues = async () => {
@@ -148,29 +151,41 @@ export function ProjectsPageContent({
       setError(null)
 
       if (userView && user) {
-        // For normal users, load only their assigned issues
-        // Get GitHub username from auth metadata
-        console.log('User object:', user)
-        console.log('User metadata:', user?.user_metadata)
+        // For normal users, load issues from permitted repositories
 
-        const githubUsername =
-          user?.user_metadata?.user_name ||
-          user?.user_metadata?.preferred_username
+        // Get repositories the user has access to
+        const { data: permissions, error: permError } = await supabase
+          .from('repository_permissions')
+          .select('repository_full_name')
+          .eq('user_id', user.id)
 
-        if (!githubUsername) {
+        if (permError) {
+          console.error('Permission query error:', permError)
+          throw permError
+        }
+
+        if (!permissions || permissions.length === 0) {
           setLoading(false)
-          setError('GitHub username not found. Please sign in with GitHub.')
+          setError(
+            'Keine Repositories freigeschaltet. Bitte wenden Sie sich an einen Administrator.'
+          )
           return
         }
 
-        console.log('GitHub username found:', githubUsername)
+        // Get repository details for permitted repos
+        const permittedRepoNames = permissions.map(
+          (p) => p.repository_full_name
+        )
 
-        // Get all managed repositories
         const { data: repositories, error: repoError } = await supabase
           .from('managed_repositories')
           .select('repository_full_name, owner, name')
+          .in('repository_full_name', permittedRepoNames)
 
-        if (repoError) throw repoError
+        if (repoError) {
+          console.error('Repository query error:', repoError)
+          throw repoError
+        }
         if (!repositories || repositories.length === 0) {
           setLoading(false)
           return
@@ -185,17 +200,31 @@ export function ProjectsPageContent({
           .maybeSingle()
 
         if (!tokenData?.encrypted_token) {
+          console.error('No active GitHub token found')
           throw new Error('No active GitHub token available')
         }
 
-        // Fetch issues for each repository, filtering by assignee
+        // Get issues created by this user
+        const { data: userCreated } = await supabase
+          .from('issues_history')
+          .select('repository_full_name, issue_number')
+          .eq('created_by', user.id)
+
+        // Create a Set for quick lookup
+        const createdByUser = new Set(
+          userCreated?.map(
+            (i) => `${i.repository_full_name}#${i.issue_number}`
+          ) || []
+        )
+
+        // Fetch issues for each repository
         const allIssues: GitHubIssue[] = []
 
         for (const repo of repositories) {
           try {
-            // GitHub API supports filtering by assignee
+            // Fetch ALL issues from permitted repositories (not filtered by assignee)
             const response = await fetch(
-              `https://api.github.com/repos/${repo.repository_full_name}/issues?state=all&assignee=${githubUsername}&per_page=100`,
+              `https://api.github.com/repos/${repo.repository_full_name}/issues?state=all&per_page=100`,
               {
                 headers: {
                   Authorization: `token ${tokenData.encrypted_token}`,
@@ -206,7 +235,7 @@ export function ProjectsPageContent({
 
             if (response.ok) {
               const issues = await response.json()
-              // Add repository info to each issue
+              // Add repository info and created-by-user flag to each issue
               const issuesWithRepo = issues.map((issue: GitHubIssue) => ({
                 ...issue,
                 repository: {
@@ -214,6 +243,9 @@ export function ProjectsPageContent({
                   name: repo.name,
                   owner: repo.owner,
                 },
+                isCreatedByUser: createdByUser.has(
+                  `${repo.repository_full_name}#${issue.number}`
+                ),
               }))
               allIssues.push(...issuesWithRepo)
             }
@@ -281,6 +313,18 @@ export function ProjectsPageContent({
           throw new Error('No active GitHub token available')
         }
 
+        // Get all issues created by users (for admin view)
+        const { data: allUserCreated } = await supabase
+          .from('issues_history')
+          .select('repository_full_name, issue_number, created_by')
+
+        // Create a Set for quick lookup
+        const createdIssuesMap = new Set(
+          allUserCreated?.map(
+            (i) => `${i.repository_full_name}#${i.issue_number}`
+          ) || []
+        )
+
         // Fetch issues for each repository
         const allIssues: GitHubIssue[] = []
 
@@ -298,7 +342,7 @@ export function ProjectsPageContent({
 
             if (response.ok) {
               const issues = await response.json()
-              // Add repository info to each issue
+              // Add repository info and created-by-user flag to each issue
               const issuesWithRepo = issues.map((issue: GitHubIssue) => ({
                 ...issue,
                 repository: {
@@ -306,6 +350,9 @@ export function ProjectsPageContent({
                   name: repo.name,
                   owner: repo.owner,
                 },
+                isCreatedByUser: createdIssuesMap.has(
+                  `${repo.repository_full_name}#${issue.number}`
+                ),
               }))
               allIssues.push(...issuesWithRepo)
             }
@@ -350,8 +397,20 @@ export function ProjectsPageContent({
         setGroupedIssues(grouped)
       }
     } catch (err) {
-      console.error('Error loading issues:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load issues')
+      console.error('=== DEBUG: Error loading issues ===')
+      console.error('Error details:', err)
+      console.error('Error type:', err?.constructor?.name)
+      if (err instanceof Error) {
+        console.error('Error message:', err.message)
+        console.error('Error stack:', err.stack)
+        setError(err.message)
+      } else if (err && typeof err === 'object') {
+        console.error('Error object:', JSON.stringify(err, null, 2))
+        setError(err.message || err.error || 'Failed to load issues')
+      } else {
+        console.error('Unknown error:', String(err))
+        setError('Failed to load issues')
+      }
     } finally {
       setLoading(false)
     }
@@ -368,15 +427,7 @@ export function ProjectsPageContent({
     const { active, over } = event
     setActiveId(null)
 
-    // Debug logs for drag & drop issues
-    console.log('Drag end event:', {
-      activeId: active.id,
-      overId: over?.id,
-      overData: over?.data?.current,
-    })
-
     if (!over) {
-      console.log('No drop target found')
       return
     }
 
@@ -386,7 +437,6 @@ export function ProjectsPageContent({
       .find((issue) => issue.id === active.id)
 
     if (!draggedIssue) {
-      console.log('Could not find dragged issue')
       return
     }
 
@@ -397,24 +447,20 @@ export function ProjectsPageContent({
     const overId = over.id as string
     if (overId.startsWith('column-')) {
       targetStatus = overId.replace('column-', '')
-      console.log('Dropped on column:', targetStatus)
     } else if (over.data?.current?.type === 'column') {
       // Check if the over data indicates a column
       targetStatus = over.data.current.status
-      console.log('Dropped on column via data:', targetStatus)
     } else {
       // If we dropped on an issue, find its parent column
       for (const [status, issues] of Object.entries(groupedIssues)) {
         if (issues.some((issue) => issue.id === over.id)) {
           targetStatus = status
-          console.log('Dropped on issue in column:', targetStatus)
           break
         }
       }
     }
 
     if (!targetStatus) {
-      console.log('Could not determine target status')
       return
     }
 
@@ -425,11 +471,8 @@ export function ProjectsPageContent({
     const currentStatus =
       currentStatusLabel?.name.replace('status:', '') || 'open'
 
-    console.log('Status change:', currentStatus, '->', targetStatus)
-
     // If status hasn't changed, do nothing
     if (currentStatus === targetStatus) {
-      console.log('Status unchanged, skipping')
       return
     }
 
@@ -473,7 +516,7 @@ export function ProjectsPageContent({
         targetStatus,
         false // Don't update UI again
       )
-    } catch (error) {
+    } catch {
       // Revert on error
       setGroupedIssues((prev) => {
         const newGrouped = { ...prev }
@@ -497,12 +540,6 @@ export function ProjectsPageContent({
   ) => {
     if (isReadOnly) return
 
-    console.log('Updating issue status:', {
-      issueId,
-      repository,
-      issueNumber,
-      newStatus,
-    })
     setUpdatingIssue(issueId)
     try {
       const { data } = await supabase.functions.invoke(
@@ -515,8 +552,6 @@ export function ProjectsPageContent({
           },
         }
       )
-
-      console.log('Edge function response:', { data })
 
       if (!data?.success) throw new Error('Failed to update issue status')
 
@@ -619,25 +654,42 @@ export function ProjectsPageContent({
     return Array.from(repoSet).sort()
   }, [groupedIssues])
 
-  // Filter issues based on selected repository
+  // Filter issues based on selected repository AND issue filter (all/mine)
   const displayedIssues = useMemo(() => {
-    if (selectedRepository === 'all') return groupedIssues
+    let filteredByRepo = groupedIssues
 
-    return {
-      open: groupedIssues.open.filter(
-        (i) => i.repository?.full_name === selectedRepository
-      ),
-      planned: groupedIssues.planned.filter(
-        (i) => i.repository?.full_name === selectedRepository
-      ),
-      'in-progress': groupedIssues['in-progress'].filter(
-        (i) => i.repository?.full_name === selectedRepository
-      ),
-      done: groupedIssues.done.filter(
-        (i) => i.repository?.full_name === selectedRepository
-      ),
+    // First filter by repository if needed
+    if (selectedRepository !== 'all') {
+      filteredByRepo = {
+        open: groupedIssues.open.filter(
+          (i) => i.repository?.full_name === selectedRepository
+        ),
+        planned: groupedIssues.planned.filter(
+          (i) => i.repository?.full_name === selectedRepository
+        ),
+        'in-progress': groupedIssues['in-progress'].filter(
+          (i) => i.repository?.full_name === selectedRepository
+        ),
+        done: groupedIssues.done.filter(
+          (i) => i.repository?.full_name === selectedRepository
+        ),
+      }
     }
-  }, [groupedIssues, selectedRepository])
+
+    // Then filter by issue type if viewing "mine" only
+    if (issueFilter === 'mine' && userView) {
+      return {
+        open: filteredByRepo.open.filter((i) => i.isCreatedByUser),
+        planned: filteredByRepo.planned.filter((i) => i.isCreatedByUser),
+        'in-progress': filteredByRepo['in-progress'].filter(
+          (i) => i.isCreatedByUser
+        ),
+        done: filteredByRepo.done.filter((i) => i.isCreatedByUser),
+      }
+    }
+
+    return filteredByRepo
+  }, [groupedIssues, selectedRepository, issueFilter, userView])
 
   const totalIssues = Object.values(groupedIssues).reduce(
     (sum, issues) => sum + issues.length,
@@ -774,6 +826,11 @@ export function ProjectsPageContent({
                   key={status.value}
                   status={status}
                   issues={displayedIssues[status.value as keyof GroupedIssues]}
+                  onCreateIssue={
+                    status.value === 'open'
+                      ? () => setIsCreateModalOpen(true)
+                      : undefined
+                  }
                 />
               ))}
             </div>
@@ -892,17 +949,14 @@ export function ProjectsPageContent({
         </div>
 
         {/* Desktop Kanban View */}
-        <div className="hidden md:block">
+        <div className="hidden md:flex flex-col h-full">
           <DndContext
             sensors={sensors}
             collisionDetection={collisionDetection}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div
-              className="grid grid-cols-4 gap-6"
-              style={{ height: 'calc(100vh - 16rem)' }}
-            >
+            <div className="grid grid-cols-4 gap-6 h-full">
               {ISSUE_STATUSES.map((status) => (
                 <DroppableColumn
                   key={status.value}
@@ -975,104 +1029,143 @@ export function ProjectsPageContent({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="p-8">
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {pageTitle}
-              </h1>
-              <p className="mt-2 text-base text-gray-600 dark:text-gray-400">
-                {pageDescription}
-              </p>
-            </div>
-            {repositories.length > 0 && (
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="repo-filter"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Repository:
-                </label>
-                <select
-                  id="repo-filter"
-                  value={selectedRepository}
-                  onChange={(e) => setSelectedRepository(e.target.value)}
-                  className="px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                >
-                  <option value="all">Alle Repositories ({totalIssues})</option>
-                  {repositories.map((repo) => {
-                    const repoIssueCount = Object.values(groupedIssues)
-                      .flat()
-                      .filter(
-                        (issue) => issue.repository?.full_name === repo
-                      ).length
-                    return (
-                      <option key={repo} value={repo}>
-                        {repo} ({repoIssueCount})
-                      </option>
-                    )
-                  })}
-                </select>
+    <div className="h-full bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <div className="flex-1 p-8 overflow-hidden">
+        <div className="max-w-7xl mx-auto h-full flex flex-col">
+          <div className="mb-8 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {pageTitle}
+                </h1>
+                <p className="mt-2 text-base text-gray-600 dark:text-gray-400">
+                  {pageDescription}
+                </p>
               </div>
-            )}
-          </div>
-        </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                {repositories.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="repo-filter"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Repository:
+                    </label>
+                    <select
+                      id="repo-filter"
+                      value={selectedRepository}
+                      onChange={(e) => setSelectedRepository(e.target.value)}
+                      className="px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    >
+                      <option value="all">
+                        Alle Repositories ({totalIssues})
+                      </option>
+                      {repositories.map((repo) => {
+                        const repoIssueCount = Object.values(groupedIssues)
+                          .flat()
+                          .filter(
+                            (issue) => issue.repository?.full_name === repo
+                          ).length
+                        return (
+                          <option key={repo} value={repo}>
+                            {repo} ({repoIssueCount})
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </div>
+                )}
 
-        {displayedIssuesCount === 0 && selectedRepository !== 'all' ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
-            <div className="max-w-md mx-auto">
-              <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No issues in {selectedRepository}
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                {userView
-                  ? "You don't have any assigned issues in this repository."
-                  : "This repository doesn't have any issues yet."}
-              </p>
+                {userView && (
+                  <div className="flex rounded-md shadow-sm">
+                    <button
+                      onClick={() => setIssueFilter('all')}
+                      className={cn(
+                        'px-4 py-2 text-sm font-medium rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                        issueFilter === 'all'
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
+                      )}
+                    >
+                      All Issues
+                    </button>
+                    <button
+                      onClick={() => setIssueFilter('mine')}
+                      className={cn(
+                        'px-4 py-2 text-sm font-medium rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 -ml-px',
+                        issueFilter === 'mine'
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
+                      )}
+                    >
+                      My Issues (
+                      {
+                        Object.values(groupedIssues)
+                          .flat()
+                          .filter((i) => i.isCreatedByUser).length
+                      }
+                      )
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        ) : totalIssues === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
-            <div className="max-w-md mx-auto">
-              <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No issues found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                {userView
-                  ? "You don't have any assigned issues yet."
-                  : "Your repositories don't have any issues yet. Create your first issue to see it here."}
-              </p>
-            </div>
-          </div>
-        ) : (
-          renderContent()
-        )}
-      </div>
 
-      {/* Create Issue Modal - Only for Admin */}
-      {!isReadOnly && (
-        <CreateIssueModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          initialRepository={
-            selectedRepository === 'all'
-              ? repositories.length > 0
-                ? repositories[0]
-                : ''
-              : selectedRepository
+          {displayedIssuesCount === 0 && selectedRepository !== 'all' ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+              <div className="max-w-md mx-auto">
+                <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  No issues in {selectedRepository}
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {userView
+                    ? "You don't have any assigned issues in this repository."
+                    : "This repository doesn't have any issues yet."}
+                </p>
+              </div>
+            </div>
+          ) : totalIssues === 0 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+              <div className="max-w-md mx-auto">
+                <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  No issues found
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {userView
+                    ? "You don't have any assigned issues yet."
+                    : "Your repositories don't have any issues yet. Create your first issue to see it here."}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-hidden">{renderContent()}</div>
+          )}
+
+          {/* Create Issue Modal */}
+          {
+            <CreateIssueModal
+              isOpen={isCreateModalOpen}
+              onClose={() => setIsCreateModalOpen(false)}
+              initialRepository={
+                selectedRepository === 'all'
+                  ? repositories.length > 0
+                    ? repositories[0]
+                    : ''
+                  : selectedRepository
+              }
+              onIssueCreated={() => {
+                // Wait a bit for GitHub to process the new issue
+                setTimeout(() => {
+                  loadAllIssues()
+                }, 1500)
+              }}
+            />
           }
-          onIssueCreated={() => {
-            // Wait a bit for GitHub to process the new issue
-            setTimeout(() => {
-              loadAllIssues()
-            }, 1500)
-          }}
-        />
-      )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -1081,9 +1174,14 @@ export function ProjectsPageContent({
 interface ReadOnlyColumnProps {
   status: (typeof ISSUE_STATUSES)[0]
   issues: GitHubIssue[]
+  onCreateIssue?: () => void
 }
 
-function ReadOnlyColumn({ status, issues }: ReadOnlyColumnProps) {
+function ReadOnlyColumn({
+  status,
+  issues,
+  onCreateIssue,
+}: ReadOnlyColumnProps) {
   const getHeaderColorClasses = (color: string) => {
     switch (color) {
       case 'green':
@@ -1112,15 +1210,23 @@ function ReadOnlyColumn({ status, issues }: ReadOnlyColumnProps) {
             <span className="opacity-75">{status.icon}</span>
             <h3 className="font-semibold text-lg">{status.label}</h3>
           </div>
-          <span className="text-sm font-medium bg-white/20 dark:bg-black/20 px-2 py-1 rounded-full">
-            {issues.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium bg-white/20 dark:bg-black/20 px-2 py-1 rounded-full">
+              {issues.length}
+            </span>
+            {onCreateIssue && (
+              <button
+                onClick={onCreateIssue}
+                className="p-1.5 rounded-full bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 transition-colors"
+                title="Create new issue"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
-      <div
-        className="flex-1 p-3 overflow-y-auto"
-        style={{ minHeight: '200px' }}
-      >
+      <div className="flex-1 p-3 overflow-y-auto">
         {issues.length === 0 ? (
           <div className="flex items-center justify-center h-full min-h-[200px] bg-gray-50 dark:bg-gray-900/30 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4">
             <p className="text-sm font-medium text-gray-400 dark:text-gray-500">
@@ -1183,20 +1289,9 @@ function DroppableColumn({
   // Only highlight if we're hovering over a different column
   const shouldHighlight = isOver && active && !isDraggingFromThisColumn
 
-  // Debug Log
+  // Debug Log - removed for production
   useEffect(() => {
-    if (active) {
-      console.log(`Column ${status.value}:`, {
-        isOver,
-        isDraggingFromThisColumn,
-        activeIssueStatus,
-        shouldHighlight,
-        activeId: active?.id,
-        activeIssue: activeIssue
-          ? { id: activeIssue.id, title: activeIssue.title }
-          : null,
-      })
-    }
+    // Trigger re-render when drag state changes
   }, [
     isOver,
     active,
@@ -1230,7 +1325,6 @@ function DroppableColumn({
         shouldHighlight &&
           'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
       )}
-      style={{ minHeight: '400px' }}
     >
       <div
         className={cn('p-4 rounded-t-xl', getHeaderColorClasses(status.color))}
@@ -1256,10 +1350,7 @@ function DroppableColumn({
           </div>
         </div>
       </div>
-      <div
-        className="flex-1 p-3 overflow-y-auto"
-        style={{ minHeight: '200px' }}
-      >
+      <div className="flex-1 p-3 overflow-y-auto">
         {issues.length === 0 ? (
           <div
             className={cn(
@@ -1360,23 +1451,35 @@ function IssueCard({
   return (
     <div
       className={cn(
-        'bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm hover:shadow-md transition-all',
+        'bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm hover:shadow-md transition-all relative',
         !showStatusChanger && 'cursor-default',
         showStatusChanger && 'cursor-move',
         'border border-gray-200 dark:border-gray-700',
         isUpdating && 'opacity-50 pointer-events-none ring-2 ring-blue-500',
-        isDragging && 'shadow-xl scale-105 rotate-1'
+        isDragging && 'shadow-xl scale-105 rotate-1',
+        issue.isCreatedByUser &&
+          'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/20'
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <Link
-            to={`/issue/${issue.repository?.owner}/${issue.repository?.name}/${issue.number}`}
-            className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 block line-clamp-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {issue.title}
-          </Link>
+          <div className="flex items-start gap-2">
+            <Link
+              to={`/issue/${issue.repository?.owner}/${issue.repository?.name}/${issue.number}`}
+              className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 block line-clamp-2 flex-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {issue.title}
+            </Link>
+            {issue.isCreatedByUser && (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 whitespace-nowrap"
+                title="Von dir erstellt"
+              >
+                My Issue
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1">
               <GitBranch className="h-3 w-3" />

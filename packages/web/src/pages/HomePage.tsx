@@ -33,6 +33,7 @@ export function HomePage() {
     ) {
       setSelectedRepository(repositories[0].repository_full_name)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repositories, repositoryFromState])
 
   const handleIssueCreated = () => {
@@ -41,23 +42,27 @@ export function HomePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8 animate-fadeIn">
-      <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-8">
-        {/* Left Column - Voice Recorder */}
-        <div>
-          <VoiceRecorder
-            onRepositoryChange={setSelectedRepository}
-            onIssueCreated={handleIssueCreated}
-            initialRepository={selectedRepository}
-          />
-        </div>
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 p-8 overflow-hidden">
+        <div className="max-w-7xl mx-auto h-full">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 h-full">
+            {/* Left Column - Voice Recorder */}
+            <div className="lg:overflow-y-auto">
+              <VoiceRecorder
+                onRepositoryChange={setSelectedRepository}
+                onIssueCreated={handleIssueCreated}
+                initialRepository={selectedRepository}
+              />
+            </div>
 
-        {/* Right Column - Issues List */}
-        <div className="lg:sticky lg:top-8 lg:h-[calc(100vh-8rem)] lg:self-start">
-          <IssuesList
-            repository={selectedRepository}
-            reloadTrigger={reloadTrigger}
-          />
+            {/* Right Column - Issues List */}
+            <div className="flex-1 lg:flex-initial lg:h-full overflow-hidden">
+              <IssuesList
+                repository={selectedRepository}
+                reloadTrigger={reloadTrigger}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

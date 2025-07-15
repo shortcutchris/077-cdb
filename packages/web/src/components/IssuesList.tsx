@@ -471,7 +471,7 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
-              Nur offene Issues anzeigen
+              Show open issues only
             </span>
           </label>
         </div>
