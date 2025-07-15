@@ -723,29 +723,27 @@ export function IssueDetailPage() {
               )}
 
               {/* Comment Form */}
-              {issue.state === 'open' && (
-                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Add a comment
-                  </h3>
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Add a comment
+                </h3>
 
-                  {/* Success Message */}
-                  {commentSuccess && (
-                    <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg text-green-700 dark:text-green-300 flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        Comment posted successfully!
-                      </span>
-                    </div>
-                  )}
+                {/* Success Message */}
+                {commentSuccess && (
+                  <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg text-green-700 dark:text-green-300 flex items-center space-x-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      Comment posted successfully!
+                    </span>
+                  </div>
+                )}
 
-                  <CommentForm
-                    onSubmit={handleCreateComment}
-                    disabled={creatingComment}
-                    placeholder="Leave a comment..."
-                  />
-                </div>
-              )}
+                <CommentForm
+                  onSubmit={handleCreateComment}
+                  disabled={creatingComment}
+                  placeholder="Leave a comment..."
+                />
+              </div>
             </div>
           </div>
 
