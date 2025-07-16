@@ -150,10 +150,8 @@ export function AdminLayout() {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="max-w-full">
-            <Outlet />
-          </div>
+        <main className="flex-1 overflow-hidden">
+          <Outlet />
         </main>
       </div>
     </div>
