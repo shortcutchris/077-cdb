@@ -28,6 +28,44 @@
       color 0.3s ease;
   }
 
+  /* Custom Scrollbar Styles */
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-50 dark:bg-gray-900;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background-color 0.2s;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+
+  ::-webkit-scrollbar-corner {
+    @apply bg-gray-50 dark:bg-gray-900;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.300') theme('colors.gray.50');
+  }
+
+  .dark * {
+    scrollbar-color: theme('colors.gray.700') theme('colors.gray.900');
+  }
+
   /* Fix iOS zoom issue on input fields */
   input[type='text'],
   input[type='email'],

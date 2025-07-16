@@ -42,8 +42,8 @@ export function HomePage() {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 p-8 overflow-hidden">
+    <div className="h-full flex flex-col">
+      <div className="flex-1 p-8 min-h-0">
         <div className="max-w-7xl mx-auto h-full">
           <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 h-full">
             {/* Left Column - Voice Recorder */}
@@ -56,7 +56,7 @@ export function HomePage() {
             </div>
 
             {/* Right Column - Issues List */}
-            <div className="flex-1 lg:flex-initial lg:h-full overflow-hidden">
+            <div className="h-full min-h-0">
               <IssuesList
                 repository={selectedRepository}
                 reloadTrigger={reloadTrigger}

@@ -1,9 +1,12 @@
-import { Outlet, Link } from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import { UserMenu } from '@/components/UserMenu'
 
 export function MainLayout() {
+  const location = useLocation()
+  const isHomePage = location.pathname === '/'
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <header className="bg-white dark:bg-gray-800 shadow-sm flex-shrink-0 px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center py-4 lg:py-6">
@@ -23,7 +26,7 @@ export function MainLayout() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
+      <main className={`flex-1 ${isHomePage ? 'min-h-0' : 'overflow-auto'}`}>
         <Outlet />
       </main>
     </div>

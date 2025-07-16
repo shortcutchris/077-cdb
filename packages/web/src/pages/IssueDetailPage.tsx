@@ -500,7 +500,7 @@ export function IssueDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <LoadingSpinner className="h-8 w-8" />
       </div>
     )
@@ -508,7 +508,7 @@ export function IssueDetailPage() {
 
   if (error || !issue) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
           <h1 className="text-xl font-semibold mb-2">Error</h1>
@@ -527,7 +527,7 @@ export function IssueDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-fadeIn">
+    <div className="bg-gray-50 dark:bg-gray-900 animate-fadeIn">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
