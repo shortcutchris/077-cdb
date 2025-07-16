@@ -47,12 +47,14 @@ export function HomePage() {
         <div className="max-w-7xl mx-auto h-full">
           <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 h-full">
             {/* Left Column - Voice Recorder */}
-            <div className="lg:overflow-y-auto">
-              <VoiceRecorder
-                onRepositoryChange={setSelectedRepository}
-                onIssueCreated={handleIssueCreated}
-                initialRepository={selectedRepository}
-              />
+            <div className="h-full overflow-hidden flex flex-col">
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
+                <VoiceRecorder
+                  onRepositoryChange={setSelectedRepository}
+                  onIssueCreated={handleIssueCreated}
+                  initialRepository={selectedRepository}
+                />
+              </div>
             </div>
 
             {/* Right Column - Issues List */}
