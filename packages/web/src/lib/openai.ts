@@ -21,7 +21,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   const formData = new FormData()
   formData.append('file', audioBlob, 'audio.webm')
   formData.append('model', 'whisper-1')
-  formData.append('language', 'de') // German, but auto-detection will work too
+  // Language will be auto-detected by Whisper
   formData.append('response_format', 'text')
 
   try {
@@ -57,30 +57,31 @@ export async function transformToIssue(
     throw new Error('OpenAI API key is not configured')
   }
 
-  const systemPrompt = `Du bist ein Experte für das Erstellen von GitHub Issues aus gesprochenen Anforderungen.
+  const systemPrompt = `You are an expert at creating GitHub issues from spoken requirements.
 
-Aufgabe: Transformiere die folgende Sprachaufnahme in ein strukturiertes GitHub Issue.
+Task: Transform the following voice recording into a structured GitHub issue.
 
-Regeln:
-- Extrahiere einen prägnanten Titel (max 80 Zeichen)
-- Strukturiere die Beschreibung mit Markdown
-- Erkenne den Issue-Typ (Feature, Bug, Enhancement, Task)
-- Schlage passende Labels vor
-- Identifiziere Akzeptanzkriterien wenn möglich
-- Behalte wichtige technische Details
-- Formuliere professionell aber behalte die Kernaussage
-- Wenn etwas unklar ist, liste es unter "needs_clarification"
+Rules:
+- Extract a concise title (max 80 characters)
+- Structure the description with Markdown
+- Identify the issue type (Feature, Bug, Enhancement, Task)
+- Suggest appropriate labels
+- Identify acceptance criteria if possible
+- Retain important technical details
+- Write professionally but keep the core message
+- If something is unclear, list it under "needs_clarification"
+- IMPORTANT: Write the issue in the SAME LANGUAGE as the transcription
 
 Repository: ${context.repository}
 
-Antworte ausschließlich mit validem JSON im folgenden Format:
+Respond ONLY with valid JSON in the following format:
 {
-  "title": "Kurzer, prägnanter Titel",
-  "body": "## Beschreibung\\n\\nDetaillierte Beschreibung...\\n\\n## Anforderungen\\n- ...\\n\\n## Akzeptanzkriterien\\n- [ ] ...",
+  "title": "Short, concise title",
+  "body": "## Description\\n\\nDetailed description...\\n\\n## Requirements\\n- ...\\n\\n## Acceptance Criteria\\n- [ ] ...",
   "labels": ["label1", "label2"],
   "type": "feature|bug|enhancement|task",
   "priority": "low|medium|high|critical",
-  "needs_clarification": ["Unklarer Punkt 1", "Unklarer Punkt 2"]
+  "needs_clarification": ["Unclear point 1", "Unclear point 2"]
 }`
 
   const userPrompt = `Transcription: ${transcription}`

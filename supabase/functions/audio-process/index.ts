@@ -102,7 +102,7 @@ serve(async (req) => {
     const formData = new FormData()
     formData.append('file', audioFile)
     formData.append('model', 'whisper-1')
-    formData.append('language', 'de') // German by default
+    // Language will be auto-detected by Whisper
     formData.append('response_format', 'json')
 
     const whisperResponse = await fetch(
