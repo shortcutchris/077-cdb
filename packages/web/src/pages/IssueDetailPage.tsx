@@ -96,6 +96,7 @@ export function IssueDetailPage() {
     }
   } | null>(null)
   const [canEditIssue, setCanEditIssue] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [statusUpdateModal, setStatusUpdateModal] = useState<{
     isOpen: boolean
     status: 'loading' | 'success' | 'error'
@@ -155,6 +156,9 @@ export function IssueDetailPage() {
         .eq('user_id', user.id)
         .eq('is_active', true)
         .maybeSingle()
+      
+      // Set admin status
+      setIsAdmin(!!adminUser)
 
       // If not admin, check specific repository permission
       if (!adminUser) {
@@ -761,14 +765,23 @@ export function IssueDetailPage() {
                   </dt>
                   <dd>
                     {(() => {
-                      // Extract current status from labels
-                      const statusLabel = issue.labels.find((l) =>
-                        l.name.startsWith('status:')
-                      )
-                      const currentStatus = statusLabel
-                        ? statusLabel.name.replace('status:', '')
-                        : 'open'
+                      // If issue is closed in GitHub, always show as done
+                      let currentStatus = 'open'
+                      
+                      if (issue.state === 'closed') {
+                        currentStatus = 'done'
+                      } else {
+                        // Extract current status from labels for open issues
+                        const statusLabel = issue.labels.find((l) =>
+                          l.name.startsWith('status:')
+                        )
+                        currentStatus = statusLabel
+                          ? statusLabel.name.replace('status:', '')
+                          : 'open'
+                      }
 
+                      // Only admins can change status of any issue
+                      // Normal users cannot change status at all
                       return canEditIssue ? (
                         <IssueStatusSelector
                           currentStatus={currentStatus}
