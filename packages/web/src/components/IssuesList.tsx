@@ -74,13 +74,103 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
   // React to reload trigger changes
   useEffect(() => {
     if (reloadTrigger && reloadTrigger > 0) {
-      // Add a delay to ensure GitHub API has processed the new issue
-      setTimeout(() => {
-        loadIssues()
-      }, 1500) // 1.5 second delay to give GitHub time to process
+      // Load immediately from Supabase, no delay needed
+      loadIssues()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reloadTrigger])
+
+  // Helper function to merge Supabase issues with GitHub issues
+  const mergeIssuesWithSupabase = async (
+    githubIssues: GitHubIssue[],
+    repository: string,
+    userId: string
+  ): Promise<GitHubIssue[]> => {
+    // Load issue history from Supabase
+    const { data: issuesHistory, error: historyError } = await supabase
+      .from('issues_history')
+      .select('*')
+      .eq('repository_full_name', repository)
+      .order('created_at', { ascending: false })
+
+    if (historyError || !issuesHistory) {
+      return githubIssues
+    }
+
+    // Get creator emails
+    const creatorIds = [
+      ...new Set(issuesHistory.map((i) => i.created_by).filter(Boolean)),
+    ]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .in('id', creatorIds)
+
+    const profileMap = new Map(profiles?.map((p) => [p.id, p.email]) || [])
+
+    // Update myIssueNumbers
+    setMyIssueNumbers(
+      issuesHistory
+        .filter((item) => item.created_by === userId)
+        .map((item) => item.issue_number)
+    )
+
+    // Create a map of GitHub issues by number
+    const githubIssueMap = new Map(
+      githubIssues.map((issue) => [issue.number, issue])
+    )
+
+    // Add creator info to existing GitHub issues
+    const enhancedIssues = githubIssues.map((issue) => ({
+      ...issue,
+      creatorEmail: issuesHistory.find(
+        (h) =>
+          h.issue_number === issue.number &&
+          h.created_by &&
+          profileMap.has(h.created_by)
+      )
+        ? profileMap.get(
+            issuesHistory.find((h) => h.issue_number === issue.number)!
+              .created_by!
+          )
+        : undefined,
+    }))
+
+    // Add any issues from Supabase that aren't in GitHub yet
+    // This handles newly created issues that GitHub API hasn't returned yet
+    issuesHistory.forEach((historyIssue) => {
+      if (!githubIssueMap.has(historyIssue.issue_number)) {
+        const creatorEmail = historyIssue.created_by
+          ? profileMap.get(historyIssue.created_by)
+          : undefined
+
+        enhancedIssues.push({
+          id: Date.now() + historyIssue.issue_number, // Temporary unique ID
+          number: historyIssue.issue_number,
+          title: historyIssue.title,
+          body: historyIssue.body,
+          state: 'open' as const, // New issues are always open
+          html_url: `https://github.com/${repository}/issues/${historyIssue.issue_number}`,
+          created_at: historyIssue.github_created_at || historyIssue.created_at,
+          updated_at: historyIssue.github_created_at || historyIssue.created_at,
+          closed_at: null,
+          user: {
+            login: creatorEmail || 'unknown',
+            avatar_url: '',
+          },
+          labels:
+            historyIssue.labels?.map((name: string, idx: number) => ({
+              id: idx,
+              name,
+              color: 'e1e4e8', // Default gray color
+            })) || [],
+          creatorEmail,
+        })
+      }
+    })
+
+    return enhancedIssues
+  }
 
   const loadIssues = async () => {
     if (!repository) return
@@ -154,7 +244,14 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
 
         const data: GitHubIssue[] = await response.json()
         const issuesOnly = data.filter((item) => !item.pull_request)
-        setIssues(issuesOnly)
+
+        // Merge with Supabase data to include newly created issues
+        const mergedIssues = await mergeIssuesWithSupabase(
+          issuesOnly,
+          repository,
+          user.id
+        )
+        setIssues(mergedIssues)
       } else {
         // Use token to access private repositories
         const [owner, repo] = repository.split('/')
@@ -179,39 +276,14 @@ export function IssuesList({ repository, reloadTrigger }: IssuesListProps) {
 
         const data: GitHubIssue[] = await response.json()
         const issuesOnly = data.filter((item) => !item.pull_request)
-        setIssues(issuesOnly)
-      }
 
-      // Load issues with creator information from Supabase
-      if (user) {
-        const { data: issuesWithCreators, error: historyError } = await supabase
-          .from('issues_with_creator')
-          .select('issue_number, creator_email, created_by')
-          .eq('repository_full_name', repository)
-
-        if (!historyError && issuesWithCreators) {
-          // Get user's own issues
-          setMyIssueNumbers(
-            issuesWithCreators
-              .filter((item) => item.created_by === user.id)
-              .map((item) => item.issue_number)
-          )
-
-          // Add creator info to issues
-          const creatorMap = new Map(
-            issuesWithCreators.map((item) => [
-              item.issue_number,
-              item.creator_email,
-            ])
-          )
-
-          setIssues((prevIssues) =>
-            prevIssues.map((issue) => ({
-              ...issue,
-              creatorEmail: creatorMap.get(issue.number),
-            }))
-          )
-        }
+        // Merge with Supabase data to include newly created issues
+        const mergedIssues = await mergeIssuesWithSupabase(
+          issuesOnly,
+          repository,
+          user.id
+        )
+        setIssues(mergedIssues)
       }
     } catch (err) {
       console.error('Error loading issues:', err)

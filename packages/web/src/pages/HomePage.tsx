@@ -9,6 +9,7 @@ export function HomePage() {
   const { repositories } = useUserRepositories()
   const [selectedRepository, setSelectedRepository] = useState<string>('')
   const [reloadTrigger, setReloadTrigger] = useState<number>(0)
+  const [isCreatingIssue, setIsCreatingIssue] = useState<boolean>(false)
 
   // Check if we have a repository from navigation state
   const repositoryFromState = location.state?.selectedRepository as
@@ -45,25 +46,32 @@ export function HomePage() {
     <div className="h-full flex flex-col">
       <div className="flex-1 p-8 min-h-0">
         <div className="max-w-7xl mx-auto h-full">
-          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 h-full">
+          <div
+            className={`flex flex-col ${isCreatingIssue ? '' : 'lg:grid lg:grid-cols-2'} gap-8 h-full`}
+          >
             {/* Left Column - Voice Recorder */}
-            <div className="h-full overflow-hidden flex flex-col">
+            <div
+              className={`h-full overflow-hidden flex flex-col ${isCreatingIssue ? 'lg:col-span-full' : ''}`}
+            >
               <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
                 <VoiceRecorder
                   onRepositoryChange={setSelectedRepository}
                   onIssueCreated={handleIssueCreated}
                   initialRepository={selectedRepository}
+                  onIssuePreviewChange={setIsCreatingIssue}
                 />
               </div>
             </div>
 
             {/* Right Column - Issues List */}
-            <div className="h-full min-h-0">
-              <IssuesList
-                repository={selectedRepository}
-                reloadTrigger={reloadTrigger}
-              />
-            </div>
+            {!isCreatingIssue && (
+              <div className="h-full min-h-0">
+                <IssuesList
+                  repository={selectedRepository}
+                  reloadTrigger={reloadTrigger}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

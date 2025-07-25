@@ -34,12 +34,14 @@ interface VoiceRecorderProps {
   onRepositoryChange?: (repository: string) => void
   onIssueCreated?: () => void
   initialRepository?: string
+  onIssuePreviewChange?: (isShowing: boolean) => void
 }
 
 export function VoiceRecorder({
   onRepositoryChange,
   onIssueCreated,
   initialRepository,
+  onIssuePreviewChange,
 }: VoiceRecorderProps) {
   const { user } = useAuth()
   const { repositories, loading: reposLoading } = useUserRepositories()
@@ -104,6 +106,13 @@ export function VoiceRecorder({
       }
     }
   }, [])
+
+  // Notify parent component when issue preview is shown/hidden
+  useEffect(() => {
+    const isShowingPreview =
+      generatedIssue !== null && processingState === 'complete'
+    onIssuePreviewChange?.(isShowingPreview)
+  }, [generatedIssue, processingState, onIssuePreviewChange])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -281,7 +290,7 @@ export function VoiceRecorder({
               throw new Error('No active session. Please sign in again.')
             }
 
-            console.log('Creating issue with Supabase SDK...')
+            // Debug: Creating issue with Supabase SDK
 
             // Use Supabase SDK to invoke the function
             const { data, error } = await supabase.functions.invoke(
